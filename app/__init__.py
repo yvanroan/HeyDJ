@@ -6,21 +6,27 @@ from flask_migrate import Migrate
 
 db = SQLAlchemy()
 migrate = Migrate()
+app = Flask(__name__)
+app.config.from_object(Config)
+db.init_app(app)
+migrate.init_app(app, db)
+    
+print("App has being initialized")
 
 
-def create_app(config_class=Config):
+# def create_app(config_class=Config):
 
-    app = Flask(__name__)
-    app.config.from_object(config_class)
-    print("yo")
+#     app = Flask(__name__)
+#     app.config.from_object(config_class)
+#     db.init_app(app)
+#     migrate.init_app(app, db)
+    
+#     print("App has being initialized")
+#     return app
+
     # with app.app_context():
     #     db.drop_all()
     #if you need to erase the whole db
-    db.init_app(app)
-    migrate.init_app(app, db)
-    time.sleep(2)
-    print("App has being initialized")
-    return app
 
 
 

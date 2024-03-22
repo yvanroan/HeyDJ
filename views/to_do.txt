@@ -1,0 +1,15 @@
+next thing here is to be able to communicate with my database. 
+like being able to add the users,djs, songs and request to my db.
+being able to communicate pull and push to the db in real time.
+
+i created a fetch function which will update the website each time we make 
+a change to the db. still need to finish it tho, not everything is updated
+yet. the stack, the history are not updated.
+
+if we remove or play a request, hte status should go to True
+we can try adding the ids of the dj and song, turn it into a number and
+compare it with the ones we have previously stored to find if the song has been
+sent by another user before. 
+
+why not make a poll after to see which song were the most requested after the party
+would be pretty easy actually 

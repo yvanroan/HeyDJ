@@ -3,21 +3,18 @@
 
 from typing import Optional
 from datetime import datetime, timezone
-import time
 import sqlalchemy as sa
 import sqlalchemy.orm as so
 from app import db
 
-
-
 class DJ(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     username: so.Mapped[str] = so.mapped_column(sa.String(64), index=True, unique=True)
-    phone: so.Mapped[str] = so.mapped_column(sa.String(64), index=True, unique=True)
-    email: so.Mapped[str] = so.mapped_column(sa.String(120), index=True, unique=True)
+    phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64), index=True, unique=True)
+    email: so.Mapped[Optional[str]] = so.mapped_column(sa.String(120), index=True, unique=True)
     password: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256))
     #optional above has to be removed when moving to prod
-    accepted_requests: so.Mapped[int]= so.mapped_column(sa.Integer, default=0)
+    accepted_requests: so.Mapped[Optional[int]]= so.mapped_column(sa.Integer, default=0)
     incoming_request: so.WriteOnlyMapped['Request'] = so.relationship(back_populates='dj')
 
     session = []
@@ -26,10 +23,10 @@ class DJ(db.Model):
     is_shazamed = True
     played = 0
 
-    print(f"The wild {username} DJ has appeared!")
+    # print(f"The wild {username} DJ has appeared!")
 
     def __repr__(self):
-        return '<DJ {name} has accepted {plays} song request>'.format(name=self.username,plays=self.accepted_requests)
+        return '<A wild DJ {name} has accepted {plays} song request>'.format(name=self.username,plays=self.accepted_requests)
     
     # def create_profile(name, email, password, phone):this cant be done here
         #these attributes' validity should be checked on the front end
@@ -96,7 +93,7 @@ class User(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     outgoing_request: so.WriteOnlyMapped['Request'] = so.relationship(back_populates='user')
 
-    print(f"The night slayer {id} has join the party!")
+    # print(f"The night slayer {id} has join the party!")
 
     def __repr__(self):
         return '<User {}>'.format(self.id)
@@ -104,8 +101,12 @@ class User(db.Model):
     def create_request(self, song_id,dj_id):
         # print("a request is being created")
         request = Request(Status=False, DJ_id= dj_id,song_id=song_id, user_id=self.id )
+        cur_dj = db.session.get(DJ,dj_id).username
+        cur_song = db.session.get(Song, song_id)
+        song_artist, song_title = cur_song.artist, cur_song.name
+
         # time.sleep(2)
-        print("a request has been created")
+        print(f"A request has been created for DJ {cur_dj} with the song {song_title} by {song_artist}")
         return request
     
 
@@ -113,7 +114,7 @@ class Song(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     name: so.Mapped[str] = so.mapped_column(sa.String)
     artist: so.Mapped[str] = so.mapped_column(sa.String)
-    genre: so.Mapped[str] = so.mapped_column(sa.String)
+    genre: so.Mapped[Optional[str]] = so.mapped_column(sa.String)
     ongoing_request: so.WriteOnlyMapped['Request'] = so.relationship(back_populates='song')
 
     def __repr__(self):
@@ -131,5 +132,8 @@ class Request(db.Model):
     song: so.Mapped[Song] = so.relationship(back_populates='ongoing_request')
     dj: so.Mapped[DJ] = so.relationship(back_populates='incoming_request')
 
+    #you need to add another parameter here, cancelled which tells us if a request was cancel or not.
+    # because status only account for the prescence of the request in the queue or not.
+    # and think of changing status to "completed" instead, it make more sense
     def __repr__(self):
         return '<Request {}>'.format(self.id)

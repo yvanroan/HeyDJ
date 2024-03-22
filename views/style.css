@@ -1,0 +1,98 @@
+body {
+    font-family: Arial, sans-serif;
+  }
+  
+  #app {
+    margin: 20px;
+  }
+  
+  #actionPanel {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+  }
+
+  body, h1, h2, h3, p, a, button, input {
+    font-family: 'Open Sans', sans-serif;
+}
+
+h1, h2, h3 {
+    font-family: 'Montserrat', sans-serif;
+}
+
+.container {
+    width: 90%;
+    margin: auto;
+    max-width: 1200px;
+}
+
+.header {
+    background-color: #2C3E50;
+    color: white;
+    padding: 20px 0;
+    text-align: center;
+}
+
+button {
+    background-color: #18BC9C;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #16A085;
+}
+
+.card {
+    background-color: #ECF0F1;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin: 20px 0;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.card h2 {
+    color: #2C3E50;
+}
+
+.card.highlight {
+    border-left: 5px solid #F39C12;
+}
+
+.interactive {
+    cursor: pointer;
+}
+
+.flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.flex-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.stack-item, .history-item {
+    padding: 10px;
+    border-bottom: 1px solid #BDC3C7;
+}
+
+.stack-item:last-child, .history-item:last-child {
+    border-bottom: none;
+}
+
+.accent {
+    color: #F39C12;
+}
+
+.text-primary {
+    color: #333333;
+}

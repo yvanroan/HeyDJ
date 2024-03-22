@@ -1,0 +1,268 @@
+<!--/*
+the homepage will be divided in two section. 
+One section for the user and the other for the DJ.
+the flow remains the same as the one outlined in the docs.
+once a user and a dj are created they can pursue their respective actions.
+the site will need to load everytime an action is performed because i want to see the live action(prints/ comments) 
+
+users:
+we have a button that creates users.
+there is a dropdown where we can see the users created and choose which ones to use.
+for each user, we can decide which songs we want to submit in a dropdown.
+we also need to have a drop down for the dj recieving this request(song), we will set 5 dj for a start.
+once the user and songs are chosen, we can send the request. this is a button.
+
+there is somekind of panel which prints the action made like creating a user or submitting a request.
+
+
+DJ:
+we have a button that creates Dj.
+there is a dropdown where we can see the dj created and choose which ones to use.
+
+we have additional button for each action of the dj( in models.py)
+we actually have to show the list of song submited to the dj(request) of the dj, all the songs added to it and potentially different ways of ordering it.
+aptitude to delete or play a song, these are button.
+the dj has a button to close the night.
+
+there is somekind of panel which prints the action made like creating a user or submitting a request.
+
+
+
+*/-->
+
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User and Song Submission</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+
+  <body>
+    <div class="header">
+        <h1>NEXT >></h1>
+    </div>
+    
+    <div class="container">
+        <!-- Session controls -->
+        <div class="card flex">
+          <button id="createUser" onclick="createUser()">Create User</button>
+            <select id="userDropdown">
+                <option>Select User...</option>
+            </select>
+            <select id="songDropdown">
+                <option>Select Song...</option>
+            </select >
+            <select id="DjDropdown">
+              <option>Select DJ</option>
+            </select>
+            <button class="interactive" id="submitRequest" onclick="createRequest()">Submit Request</button>
+        </div>
+        
+
+        <div>
+          <h2>DJ Session</h2>
+          <input type="text" id="request" placeholder="Select Request">
+          <button onclick="removeRequest()">Remove Request</button>
+          <button onclick="playRequest()">Play</button>
+
+          <div class="card">
+            <h2>Stack</h2>
+              <ul id="myList">
+              </ul>
+          </div>
+      
+          <!-- History -->
+          <div id="actionPanel" class="card highlight">
+              <h2>History</h2>
+          </div>
+        </div>
+        <!-- Stack -->
+        
+    
+        <!-- Add New Data -->
+        <div class="card flex-column">
+            <h2>Add New Data in DB</h2>
+            <input type="text" placeholder="Enter new item...">
+            <button class="interactive accent">Add Item</button>
+        </div>
+    </div>
+
+    <script>
+      function createUser() {
+        const user = document.getElementById('userDropdown');
+        fetch(`http://127.0.0.1:5000/api/user`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          data.Users.id.forEach(item => {
+            
+            info = `User ID: ${item}`;
+            const option = new Option(info, info);
+            option.id = `user_${item}`;
+            user.add(option);
+
+            logAction(`Created ${userName}`);
+          })
+          .catch(error => console.error('Error:', error));
+          });
+
+        fetchData();
+      }
+
+      function createRequest(user_id, dj_id, song_id){
+        const dj = document.getElementById('DjDropdown');
+        const user = document.getElementById('userDropdown');
+        const song = document.getElementById('songDropdown');
+
+        if(user.value !== 'Select User' && song.value !== 'Select Song' && dj.value !== 'Select DJ') {
+          addRequest(song,dj);
+          logAction(`Submitted request for ${user} with ${song} to ${dj}`);
+        } else {
+          logAction('Please select a DJ, a user and a song. Thank you!');
+          return {};
+        }
+
+        var selectedUser = user.options[user.selectedIndex];
+        var selectedDj = dj.options[dj.selectedIndex];
+        var selectedSong = song.options[song.selectedIndex];
+
+        // Now you have the selected option, and you can get its id
+        var userId = selectedUser.id.split("")[-1];
+        var songId = selectedSong.id.split("")[-1];
+        var djId = selectedDj.id.split("")[-1];
+
+        var data = {'user_id':userId, 'song_id':songId, 'dj_id': djId};
+
+        fetch(`http://127.0.0.1:5000/api/request`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)  // Convert the JavaScript object to a JSON string
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();  // Parse JSON response into JavaScript object
+        })
+        .then(data => {
+            console.log('Success:', data);
+            // Do something with the response data
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+
+        fetchData();
+
+      }
+
+      function fetchData(){
+
+        fetch(`http://127.0.0.1:5000/api`, {
+          method: 'GET', // or 'POST', etc.
+          credentials: 'include', // To include cookies for cross-origin requests
+        }).then(response =>{
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+          }).then(data => {
+              const dj = document.getElementById('DjDropdown');
+                
+              const song = document.getElementById('songDropdown');
+
+              let result_dj = data.Djs.id.map((_, index) => {
+                              return Object.keys(data.Djs).map(key => `${key}: ${data.Djs[key][index]}`).join(' , ');
+                              });
+
+              result_dj.forEach(i => {
+                info = `DJ ${i}`;
+                const option = new Option(info, info);
+                key= info.split(" ")[2];
+                option.id = `dj_${key}`;
+                dj.add(option);
+              });
+
+              let result_song = data.Songs.id.map((_, index) => {
+                                return Object.keys(data.Songs).map(key => `${key}: ${data.Songs[key][index]}`).join(' , ');
+                              });
+
+              resultArray.forEach(i => {
+                info = `Song ${i}`;
+                const option = new Option(info, info);
+                key = info.split(" ")[2];
+                option.id = `song_${key}`;
+                song.add(option);
+              });
+            })
+          .catch(error => console.error('Error fetching items:', error));
+      }
+      let stack = {};
+      // let requests = 0; //you could do this with your request entity but you need to be able to update your db first so using put
+
+
+
+      function removeRequest(){
+        const session = document.querySelectorAll('#myList li');
+        const value = document.getElementById('request').value;
+        var remove = false;
+
+        session.forEach((li) => {
+          if (li.textContent.trim() === value.trim()){
+            li.parentNode.removeChild(li);
+            logAction(`The request '${value}' has been removed`);
+            
+            remove = true;
+          }
+        });
+
+        if (!remove){
+          logAction(`the request was not found. Please enter a valid request first`);
+        }
+
+
+      }
+
+      function addRequest(song,dj){//once you connect your request entity, just check if the song and dj are part of the request and change it
+        const session = document.getElementById('myList');
+        
+        let name = song+' for '+ dj + ' credit/request in the stack: ';
+        // logAction(name)
+        if (name in stack){
+          logAction("Already in the list, credit will be added, request id should be here to help trace")
+          
+          const requests = session.querySelectorAll('li');
+
+          requests.forEach(li =>{
+            if (li.textContent.trim() === name + stack[name]){
+              stack[name]+=1;
+              li.textContent = name  + stack[name]
+            }
+          })
+        }
+        else{
+
+        stack[name]= 1;
+        const child = document.createElement('li');
+        child.textContent = name + stack[name]
+        session.appendChild(child);
+        }       
+      }
+
+      function logAction(action) {
+        const actionPanel = document.getElementById('actionPanel');
+        const p = document.createElement('p');
+        p.textContent = action;
+        actionPanel.appendChild(p);
+      }
+
+    </script>
+  </body>
+</html>
