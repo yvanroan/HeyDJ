@@ -1,0 +1,58 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXT >></title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+
+  <body>
+    <div class="header">
+        <h1>NEXT >></h1>
+    </div>
+    
+    <div class="container">
+        <!-- Session controls -->
+        <div class="card flex">
+          <div>
+            <input type="text" id="eventInput" placeholder="Event Name...">
+            <input type="text" id="djInput" placeholder="Main DJ Id...">
+            <button class="interactive" id="createEvent" onclick="create_event()">Create Event</button>
+          </div>
+        </div>
+        
+    </div>
+
+    <script>
+      function create_event(){
+
+        const name = document.getElementById('eventInput').value;
+        const djid = parseInt(document.getElementById('djInput').value);
+        const data = {'name':name, 'dj':djid};
+        console.log(data);
+        fetch(`http://127.0.0.1:5000/api/event`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(dat => {
+          localStorage.setItem('eventId_dj', dat['id']);
+          localStorage.setItem('djId_dj', djid);
+          console.log('yeah');
+
+          window.location.href = 'http://127.0.0.1:5500/views/dj.html';
+
+          })
+          .catch(error => console.error('Error:', error));
+          
+        }
+
+    </script>
+  </body>
+</html>

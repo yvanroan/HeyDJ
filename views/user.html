@@ -1,0 +1,161 @@
+<!-- 
+    all you have to do here is just click on the button and it will just refresh the page.
+    after the refresh it should lead you to a new page.
+ -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXT >></title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+
+  <body>
+    <div class="header">
+        <h1>NEXT >></h1>
+    </div>
+    
+    <div class="container">
+        <!-- Session controls -->
+        <div class="card flex">
+          <h2 id = "eventId"></h2>
+          <input id="songTitle" type="text" placeholder="Enter song title">
+          <input id="songArtist" type="text" placeholder="Enter artist">
+          <button class="interactive" id="submitRequest" onclick="createRequest()">Submit Request</button>
+        </div>
+        
+        <div>
+          <!-- History -->
+          <div id="actionPanel" class="card highlight">
+              <h3>History</h3>
+          </div>
+        </div>
+        <!-- Stack -->
+        
+        
+        <!-- Add New Data -->
+
+        
+        <button class="interactive accent" type="button" onclick = "endEvent()">End Event</button>
+        
+    </div>
+
+    <script>
+      
+      window.onload = fetchData_user();      
+
+      function createRequest(){
+
+        const song_artist = document.getElementById('songArtist');
+        const song_title = document.getElementById('songTitle');
+
+        if(song_artist.value === '' || song_title.value === ''){
+          logAction('Please enter the artist and title of the song before submitting. Thank you!');
+          return {};
+        }
+
+        
+
+        var data = {'user_id':localStorage.getItem('userId'), 'song_title':song_title.value, 'song_artist':song_artist.value, 'dj_id': localStorage.getItem('djId_user'), 'event_id':localStorage.getItem('eventId_user')};
+        console.log(data)
+        fetch(`http://127.0.0.1:5000/api/request`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)  // Convert the JavaScript object to a JSON string
+        }).then(response =>{
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+          }).then(data => {
+            if ('msg' in data){
+              console.error('Error:', data['msg']);
+            }
+          })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+
+        location.reload()
+
+      }
+
+      
+
+      function fetchData_user(){
+        dat= {}
+        if (localStorage.getItem('eventId_user') && localStorage.getItem('userId')) {
+          dat['id'] = localStorage.getItem('eventId_user');
+          dat['user_id'] = localStorage.getItem('userId');
+        }else{
+          console.log("How did you get here? you got no event id or userid");
+          return {}
+        }
+        fetch(`http://127.0.0.1:5000/apiuser`, {
+          method: 'POST', // or 'POST', etc.
+          headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(dat)
+        }).then(response =>{
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+          }).then(data => {
+              const song = document.getElementById('songDropdown');
+              const event = document.getElementById('eventDropdown');
+
+              
+
+              // let result_song = data.Songs.id.map((_, index) => {
+              //                   return Object.keys(data.Songs).map(key => `${key}: ${data.Songs[key][index]}`).join(' , ');
+              //                 });
+
+              // result_song.forEach(i => {
+              //   info = `Song ${i}`;
+              //   const option = new Option(info, info);
+              //   key = info.split(" ")[5];
+              //   option.id = `song_${key}`;
+              //   song.add(option);
+              // });
+
+              if(Object.keys(data.Requests).length !== 0){
+                let requests_data = data.Requests.id.map((_, index) => {
+                                return Object.keys(data.Requests)
+                                .filter(key => ['song_name', 'song_artist', 'ask', 'timestamp'].includes(key))
+                                .map(key => `${key}: ${data.Requests[key][index]}`)
+                                .join(' , ');
+                              });
+
+                console.log(requests_data);
+                
+                requests_data.forEach(i => {
+                  logAction(i);
+                }); 
+              }
+              
+              document.getElementById("eventId").innerHTML = 'Event: ' + data.Event['name'] + '(id: ' + data.Event['id'] + ')';
+
+            })
+          .catch(error => console.error('Error fetching items:', error));
+      }
+
+      function logAction(action) {
+        const actionPanel = document.getElementById('actionPanel');
+        const p = document.createElement('p');
+        p.textContent = action;
+        actionPanel.appendChild(p);
+      }
+
+
+      function endEvent(){
+        document.getElementById('endEventButton').addEventListener('click', function() {
+          localStorage.removeItem('eventId');
+          // Optionally, take further actions after ending the event.
+        });
+      }
+
+    </script>
+  </body>
+</html>

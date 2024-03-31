@@ -1,39 +1,26 @@
 from flask import Flask
-import time
 from config import Config
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from sqlalchemy import MetaData
 
-db = SQLAlchemy()
+convention = {
+    "ix": 'ix_%(column_0_label)s',
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s"
+}
+
+metadata = MetaData(naming_convention=convention)
+db = SQLAlchemy(metadata=metadata)
 migrate = Migrate()
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
 migrate.init_app(app, db)
+
     
 print("App has being initialized")
 
-
-# def create_app(config_class=Config):
-
-#     app = Flask(__name__)
-#     app.config.from_object(config_class)
-#     db.init_app(app)
-#     migrate.init_app(app, db)
-    
-#     print("App has being initialized")
-#     return app
-
-    # with app.app_context():
-    #     db.drop_all()
-    #if you need to erase the whole db
-
-
-
-# the db object that represents the database. Then I added migrate, to represent the database migration engine. 
-#I'm importing a new module called models at the bottom. This module will define the structure of the database.
-
-# from app.views import viewBp
-# app.register_blueprint(viewBp)
-
-from app import routes, models
+from app import routes, models, encode_decode

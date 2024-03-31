@@ -1,0 +1,348 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXT >></title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+
+  <body>
+    <div class="header">
+        <h1>NEXT >></h1>
+    </div>
+    
+    <div class="container">
+        <!-- Session controls -->
+        <div class="card flex">
+          <p id = "eventId"></p>
+        </div>
+        
+
+        <div>
+          <h2><span id = "djSession"></span>'s  Session</h2>
+          <div class = "djPlayer">
+            <input type="text" id="request" placeholder="Insert Request Id">
+            <button id="recordButton" onclick="removeRequest(1)">Play</button>
+          </div>
+
+          <div class="slider-container">
+            <input type="range" min="1" max="100" value="1" class="slider" id="mySlider">
+            <label for="mySlider" class="slider-label">Slide to Remove Request</label>
+          </div>
+
+          <div class="card">
+            <h2>Stack</h2>
+              <ul id="myList">
+              </ul>
+          </div>
+      
+          <!-- History -->
+          <!-- <div id="actionPanel" class="card highlight">
+              <h2>History</h2>
+          </div>
+        </div> -->
+        <!-- Stack -->
+        
+        
+        <!-- Add New Data -->
+        <div class="card flex-column">
+            <h2>End event</h2>
+            <button class="interactive accent" type="button" onclick = "endEvent()">End Event</button>
+        </div>
+    </div>
+
+    <script>
+      
+      window.onload = fetchData_dj();
+      let title = ''
+      let artist = ''
+      let requests_data = [];
+      let req_id = [];
+
+      let req_song_titles = [];
+      let req_song_artists = [];
+
+      function fetchData_dj(){
+        dat= {}
+        if (localStorage.getItem('eventId_dj')) {
+          dat['id'] = localStorage.getItem('eventId_dj');
+        }else{
+          console.log("create an event first");
+          return {}
+        }
+        fetch(`http://127.0.0.1:5000/apidj`, {
+          method: 'POST', // or 'POST', etc.
+          headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(dat)
+        }).then(response =>{
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+          }).then(data => {
+              document.getElementById("djSession").innerHTML = data.Dj['name'];
+              
+              console.log(data.Requests)
+              
+              if(Object.keys(data.Requests).length !== 0){
+                req_id = data.Requests.id;
+                req_song_titles = data.Requests.song_name;
+                req_song_artists = data.Requests.song_artist;
+                requests_data = data.Requests.id.map((_, index) => {
+                                return Object.keys(data.Requests)
+                                .filter(key => ['song_name', 'song_artist', 'ask', 'timestamp', 'id'].includes(key))
+                                .map(key => `${key}: ${data.Requests[key][index]}`)
+                                .join(' , ');
+                              });
+
+                console.log(requests_data);
+                const session = document.getElementById('myList');
+                
+                requests_data.forEach(i => {
+                  let child = document.createElement('li');
+                  child.textContent = i;
+                  session.appendChild(child);
+                }); 
+              }
+
+              let result_ev = 'Event id: ' + data.Event['id'] + ', name: ' + data.Event['name'];
+
+              document.getElementById("eventId").innerHTML = 'Event: ' + data.Event['name'] + '(id: ' + data.Event['id'] + ')';
+
+            })
+          .catch(error => console.error('Error fetching items:', error));
+      }
+      
+      let mediaRecorder;
+      let audioChunks = [];
+      var isRecording = false;
+
+
+      async function removeRequest(state){
+        const session = document.querySelectorAll('#myList li');
+        const id = parseInt(document.getElementById('request').value);
+        var valid_id = false;
+        var cancel = false;
+        var song_match = false;
+        let index
+
+        for (let i = 0; i < req_id.length; i++) {
+          
+          if(req_id[i]===id){
+            console.log("in");
+            valid_id = true;
+            if(state === 1){
+              console.log("we are listening");
+              const [shazam_title, shazam_artist] = await shazam();
+
+              if(areSimilarCaseInsensitive(shazam_title, req_song_titles[i]) && areSimilarCaseInsensitive(shazam_artist, req_song_artists)){
+                song_match = true;
+              }
+
+            }
+            if(state === 0){
+              console.log("you cancelled");
+              cancel = true;
+            }
+
+            if(song_match || cancel){
+              data ={'id': id, 'cancel': cancel};
+              fetch(`http://127.0.0.1:5000/api/request_delta`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)  // Convert the JavaScript object to a JSON string
+              })
+              .catch((error) => {
+                console.error('Error:', error);
+              });
+            }
+          }
+        }
+
+
+        
+        
+
+        if(!valid_id){
+          console.log("enter a good id")
+        }
+
+        // fetchData();
+      }
+      
+      function areSimilarCaseInsensitive(text1, text2) {
+        const lowerText1 = String(text1).toLowerCase();
+        const lowerText2 = String(text2).toLowerCase();
+        return lowerText1.includes(lowerText2) || lowerText2.includes(lowerText1);
+      }
+
+      function shazam(){
+        
+        let title = '';
+        let artist = '';
+        console.log(isRecording);
+
+        if (isRecording) {
+          return Promise.reject(new Error("Recording is already in progress")); // Exit if a recording is already in progress
+        }
+
+        isRecording = true; // Set the recording flag
+
+        return new Promise((resolve, reject) => {
+          navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                  mediaRecorder = new MediaRecorder(stream);
+                  mediaRecorder.start();
+                  audioChunks = [];
+
+                  mediaRecorder.ondataavailable = event => {
+                      audioChunks.push(event.data);
+                  };
+
+                  setTimeout(() => {
+                      // Stop recording after 4 seconds
+                      mediaRecorder.stop();
+                      // Disable the button for 10 seconds (cooldown period)
+                      // document.getElementById("recordButton").disabled = true;
+                      // setTimeout(() => {
+                      //     document.getElementById("recordButton").disabled = false;
+                      //     isRecording = false; // Reset the recording flag after cooldown
+                      // }, 10000); // 10 seconds cooldown
+                  }, 4000); // 4 seconds recording
+
+                  mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const formData = new FormData();
+                    formData.append("audio", audioBlob);
+
+                    isRecording=  false;
+                    title = 'Dumebi';
+                    artist = 'Rema';
+                    console.log(title, artist);
+                    resolve([title, artist]);
+
+                    // fetch("http://127.0.0.1:5000/apidj/upload-audio", {
+                    //   method: "POST",
+                    //   body: formData,
+                    // }).then(response => {
+
+                    //   if (!response.ok) {
+                    //     throw new Error('Network response was not ok');
+                    //   }
+                    //   // console.log(response);
+                      
+                    //   return response.json()
+                    // })
+                    //   .then(data => {
+                    //     console.log(data); // Handle the response data, e.g., the transcribed text
+                    //     title = data["title"];
+                    //     artist = data["artist"];
+                    //     isRecording = false;
+
+                    //   });
+                  };
+            });
+          });
+
+      }
+
+
+      // document.getElementById("recordButton").addEventListener("click", () => {
+      //     if (isRecording) {
+      //         return; // Exit if a recording is already in progress
+      //     }
+          
+      //     isRecording = true; // Set the recording flag
+      //     navigator.mediaDevices.getUserMedia({ audio: true })
+      //         .then(stream => {
+      //             mediaRecorder = new MediaRecorder(stream);
+      //             mediaRecorder.start();
+      //             audioChunks = [];
+
+      //             mediaRecorder.ondataavailable = event => {
+      //                 audioChunks.push(event.data);
+      //             };
+
+      //             setTimeout(() => {
+      //                 // Stop recording after 4 seconds
+      //                 mediaRecorder.stop();
+      //                 // Disable the button for 10 seconds (cooldown period)
+      //                 document.getElementById("recordButton").disabled = true;
+      //                 setTimeout(() => {
+      //                     document.getElementById("recordButton").disabled = false;
+      //                     isRecording = false; // Reset the recording flag after cooldown
+      //                 }, 10000); // 10 seconds cooldown
+      //             }, 4000); // 4 seconds recording
+
+      //             mediaRecorder.onstop = () => {
+      //               const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+      //               const formData = new FormData();
+      //               formData.append("audio", audioBlob);
+
+      //               fetch("http://127.0.0.1:5000/apidj/upload-audio", {
+      //                 method: "POST",
+      //                 body: formData,
+      //               }).then(response => {
+
+      //                 if (!response.ok) {
+      //                   throw new Error('Network response was not ok');
+      //                 }
+      //                 // console.log(response);
+                      
+      //                 return response.json()
+      //               })
+      //                 .then(data => {
+      //                   console.log(data); // Handle the response data, e.g., the transcribed text
+      //                   title = data["title"];
+      //                   artist = data["artist"];
+
+      //                 });
+      //             };
+      //         });
+      // });
+
+      
+
+      document.getElementById('mySlider').addEventListener('input', function(e) {
+        const slider = e.target;
+        const max = slider.max;
+        const value = slider.value;
+        
+        // When the slider reaches the end
+        if (value == max) {
+            // Perform your action here
+            // alert('Slider reached the end!');
+            removeRequest(0);
+            // Smoothly reset the slider value
+            const resetSlider = () => {
+                if (slider.value > slider.min) {
+                    // Decrease the value gradually
+                    slider.value -= 5;
+                    // Continue the animation
+                    requestAnimationFrame(resetSlider);
+                }
+            };
+            
+            // Start the resetting process after a short delay to allow for a pause at the end
+            setTimeout(() => {
+                requestAnimationFrame(resetSlider);
+            }, 500); // Delay before starting to reset
+        }
+      });
+
+
+      function endEvent(){
+        document.getElementById('endEventButton').addEventListener('click', function() {
+          localStorage.removeItem('eventId');
+          // Optionally, take further actions after ending the event.
+        });
+      }
+
+    </script>
+  </body>
+</html>

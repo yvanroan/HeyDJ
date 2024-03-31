@@ -44,7 +44,11 @@ button {
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
-
+select {
+    /* padding: 10px 20px; */
+    margin: 10px;
+    cursor: pointer;
+}
 button:hover {
     background-color: #16A085;
 }
@@ -67,17 +71,14 @@ button:hover {
 
 .interactive {
     cursor: pointer;
+    align-items: center;
 }
 
 .flex {
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
     align-items: center;
-}
-
-.flex-column {
-    display: flex;
-    flex-direction: column;
 }
 
 .stack-item, .history-item {
@@ -90,9 +91,63 @@ button:hover {
 }
 
 .accent {
-    color: #F39C12;
+    color: #074057;
 }
 
 .text-primary {
     color: #333333;
 }
+
+.djPlayer {
+    margin: auto;
+}
+
+.slider-container {
+    position: relative;
+    /* width: 250px; */
+    margin: 30px auto;
+}
+
+.slider {
+    /* -webkit-appearance: none; */
+    width: 40%;
+    height: 10px;
+    border-radius: 5px;
+    background: #ddd;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+}
+
+.slider-label {
+    position: absolute;
+    top: -30px;
+    left: 30%;
+    transform: translateX(-50%);
+    color: green;
+    font-family: Arial, sans-serif;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    border: 2px solid green;
+    transition: background 0.3s ease; /* Smooth transition for background */
+}
+
+.slider::-moz-range-thumb {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    border: 2px solid green;
+    transition: background 0.3s ease; /* Smooth transition for background */
+}
+

@@ -1,20 +1,24 @@
 # https://stackoverflow.com/questions/23340812/python-sqlite-table-a-has-no-column-named-x
 
 
+
 from typing import Optional
 from datetime import datetime, timezone
 import sqlalchemy as sa
 import sqlalchemy.orm as so
 from app import db
+from dataclasses import dataclass
 
+@dataclass
 class DJ(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    username: so.Mapped[str] = so.mapped_column(sa.String(64), index=True, unique=True)
-    phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64), index=True, unique=True)
-    email: so.Mapped[Optional[str]] = so.mapped_column(sa.String(120), index=True, unique=True)
-    password: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256))
+    username: so.Mapped[str] = so.mapped_column(sa.String(64), index=True)
+    phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
+    email: so.Mapped[Optional[str]] = so.mapped_column(sa.String(120))
+    password: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256))#make sure to hash the password when in prod( look up bcrypt)
     #optional above has to be removed when moving to prod
     accepted_requests: so.Mapped[Optional[int]]= so.mapped_column(sa.Integer, default=0)
+    events : so.WriteOnlyMapped['Event'] = so.relationship(back_populates='dj')
     incoming_request: so.WriteOnlyMapped['Request'] = so.relationship(back_populates='dj')
 
     session = []
@@ -24,14 +28,14 @@ class DJ(db.Model):
     played = 0
 
     # print(f"The wild {username} DJ has appeared!")
-
+    
     def __repr__(self):
         return '<A wild DJ {name} has accepted {plays} song request>'.format(name=self.username,plays=self.accepted_requests)
     
     # def create_profile(name, email, password, phone):this cant be done here
         #these attributes' validity should be checked on the front end
     
-    def add_to_session(self,request:'Request'):
+    def add_to_stack(self,request:'Request'):
         if self.cur_session_len > self.MAX_REQUEST:
             print("Max request for your queue/session has been reached. accept or deny more request to get more requests")
             return
@@ -89,6 +93,7 @@ class DJ(db.Model):
         print(f"You had a great night with {self.played} request accpeted. Thank you for using the app!")
         return self.played
   
+@dataclass
 class User(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     outgoing_request: so.WriteOnlyMapped['Request'] = so.relationship(back_populates='user')
@@ -98,21 +103,23 @@ class User(db.Model):
     def __repr__(self):
         return '<User {}>'.format(self.id)
     
-    def create_request(self, song_id,dj_id):
+    def create_request(self, song_id,djid, event_id):
         # print("a request is being created")
-        request = Request(Status=False, DJ_id= dj_id,song_id=song_id, user_id=self.id )
-        cur_dj = db.session.get(DJ,dj_id).username
+        request = Request(in_stack=True, dj_id= djid,song_id=song_id, user_id=self.id, event_id= event_id, cancelled=False)
+        cur_dj = db.session.get(DJ,djid).username
         cur_song = db.session.get(Song, song_id)
         song_artist, song_title = cur_song.artist, cur_song.name
+        print(event_id, cur_dj)
+        event = db.session.get(Event, event_id).name
 
         # time.sleep(2)
-        print(f"A request has been created for DJ {cur_dj} with the song {song_title} by {song_artist}")
+        print(f"A request has been sent to DJ {cur_dj} with the song {song_title} by {song_artist} for {event}")
         return request
     
-
+@dataclass
 class Song(db.Model):
-    id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    name: so.Mapped[str] = so.mapped_column(sa.String)
+    id: so.Mapped[int] = so.mapped_column(primary_key=True) 
+    name: so.Mapped[str] = so.mapped_column(sa.String, index=True)
     artist: so.Mapped[str] = so.mapped_column(sa.String)
     genre: so.Mapped[Optional[str]] = so.mapped_column(sa.String)
     ongoing_request: so.WriteOnlyMapped['Request'] = so.relationship(back_populates='song')
@@ -120,20 +127,36 @@ class Song(db.Model):
     def __repr__(self):
         return '<Song: {name} by {artist}>'.format(name=self.name, artist=self.artist)
 
-    
+class Event(db.Model):
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    name: so.Mapped[str] = so.mapped_column(sa.String)
+    place: so.Mapped[Optional[str]] = so.mapped_column(sa.String)
+    theme: so.Mapped[Optional[str]] = so.mapped_column(sa.String)
+    dj_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(DJ.id), index=True)
+    dj: so.Mapped[DJ] = so.relationship(back_populates='events')
+    event_request: so.WriteOnlyMapped['Request'] = so.relationship(back_populates='event')
+
+@dataclass  
 class Request(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    timestamp: so.Mapped[datetime] = so.mapped_column(index=True, default=lambda: datetime.now(timezone.utc))
-    Status: so.Mapped[bool] = so.mapped_column(sa.Boolean)
-    DJ_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(DJ.id), index=True)
-    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
+    timestamp: so.Mapped[datetime] = so.mapped_column(default=lambda: datetime.now(timezone.utc))
+    in_stack: so.Mapped[bool] = so.mapped_column(sa.Boolean)
+    dj_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(DJ.id), index=True)
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id))
     song_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Song.id), index=True)
+    event_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Event.id), index=True)
+    cancelled: so.Mapped[bool] = so.mapped_column(sa.Boolean)
     user: so.Mapped[User] = so.relationship(back_populates='outgoing_request')
     song: so.Mapped[Song] = so.relationship(back_populates='ongoing_request')
     dj: so.Mapped[DJ] = so.relationship(back_populates='incoming_request')
-
+    event: so.Mapped[Event] = so.relationship(back_populates='event_request')
+    
+    # change Status to in_stack
     #you need to add another parameter here, cancelled which tells us if a request was cancel or not.
     # because status only account for the prescence of the request in the queue or not.
     # and think of changing status to "completed" instead, it make more sense
     def __repr__(self):
-        return '<Request {}>'.format(self.id)
+        return '<Request {}>'.format(self.DJ_id)
+    
+
+    
