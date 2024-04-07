@@ -69,4 +69,9 @@ eman wants a feature that let people now if they are next in the dj's queue
 check if lastfm save title the same way shazam does. verify with this
 ['Tuesday (feat. Drake)', 'iLoveMakonnen']
 
-***prevent sql injection in your code***
+***prevent sql injection in your code*** apparently using orm makes thing better against data injection
+so using orm payed off
+
+now we have to be able to create users from the page, and deal with authentication.
+
+

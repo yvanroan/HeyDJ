@@ -220,32 +220,44 @@
                     const formData = new FormData();
                     formData.append("audio", audioBlob);
 
-                    isRecording=  false;
-                    title = 'Dumebi';
-                    artist = 'Rema';
-                    console.log(title, artist);
-                    resolve([title, artist]);
+                    // isRecording=  false;
+                    // title = 'Dumebi';
+                    // artist = 'Rema';
+                    // console.log(title, artist);
+                    // resolve([title, artist]);
 
-                    // fetch("http://127.0.0.1:5000/apidj/upload-audio", {
-                    //   method: "POST",
-                    //   body: formData,
-                    // }).then(response => {
+                    fetch("http://127.0.0.1:5000/apidj/upload-audio", {
+                      method: "POST",
+                      body: formData,
+                    }).then(response => {
 
-                    //   if (!response.ok) {
-                    //     throw new Error('Network response was not ok');
-                    //   }
-                    //   // console.log(response);
+                      if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                      }
+                      // console.log(response);
                       
-                    //   return response.json()
-                    // })
-                    //   .then(data => {
-                    //     console.log(data); // Handle the response data, e.g., the transcribed text
-                    //     title = data["title"];
-                    //     artist = data["artist"];
-                    //     isRecording = false;
+                      return response.json()
+                    })
+                      .then(data => {
+                        console.log(data); // Handle the response data, e.g., the transcribed text
+                        title = data["title"];
+                        artist = data["artist"];
+                        resolve([title, artist]); 
 
-                    //   });
+                      })
+                      .catch(err => {
+                        console.error(err);
+                        reject(err); // Reject the promise on error
+                      })
+                      .finally(() => {
+                          isRecording = false;
+                      });
                   };
+            })
+            .catch(err => {
+                console.error(err);
+                isRecording = false;
+                reject(err); // Reject the promise if getting user media fails
             });
           });
 

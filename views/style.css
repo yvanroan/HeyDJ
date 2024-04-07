@@ -151,3 +151,11 @@ button:hover {
     transition: background 0.3s ease; /* Smooth transition for background */
 }
 
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+}

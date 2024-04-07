@@ -1,2 +1,5 @@
 .env
 to_do.txt
+
+venv/
+__pycache__/
