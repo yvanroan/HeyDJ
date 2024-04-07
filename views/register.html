@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXT >> Registration</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>NEXT >></h1>
+    </div>
+    <div class="card flex">
+        <form id="registrationForm">
+            <h2>Registration</h2>
+            <div class="form-group">
+                <label for="name">DJ Name</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input name="phone" id="phone" type="tel" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required>
+            </div>
+            <button type="submit">Register!</button>
+        </form>
+    </div>
+
+    <script>
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const name = document.getElementById('name');
+            const email = document.getElementById('email');
+            const phone = document.getElementById('phone');
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const errorMessage = document.createElement('span');
+            errorMessage.style.color = 'red';
+            confirmPasswordInput.parentNode.insertBefore(errorMessage, confirmPasswordInput.nextSibling);
+
+            function validatePasswords() {
+                if (passwordInput.value === confirmPasswordInput.value) {
+                    errorMessage.textContent = '';
+                    return true;
+                } else {
+                    errorMessage.textContent = 'Passwords are not the same';
+                    return false; 
+                }
+            }
+
+            function validateEmail(email) {
+                const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return regex.test(email);
+            }
+
+            function validatePassword(password) {
+                const regex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/;
+                return regex.test(password);
+            }
+
+            function validatePhone(phone) {
+                const regex = /^\d{10}$/; // /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
+                return regex.test(phone);
+            }
+
+            confirmPasswordInput.addEventListener('input', validatePasswords);
+
+            document.getElementById('registrationForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+                
+
+
+                // return;
+                const passwordsMatch = validatePasswords(); // Validate passwords
+                if (!passwordsMatch) { // Prevent form submission if passwords do not match
+                    // Optionally, display a general error message or focus the confirmPasswordInput
+                    confirmPasswordInput.focus();
+                }
+
+                let valid = true;
+                let messages = [];
+
+                if (!validateEmail(email.value)) {
+                    console.log(email.value);
+                    messages.push('Email is not valid.');
+                    valid = false;
+                }
+
+                if (!validatePassword(confirmPasswordInput.value)) {
+                    console.log(confirmPasswordInput.value);
+                    messages.push('Password must be at least 8 characters long and include uppercase letters, lowercase letters, and numbers.');
+                    valid = false;
+                }
+
+                if (!validatePhone(phone.value)) {
+                    console.log(phone.value);
+                    messages.push('Phone number is not valid. Format: XXX-XXX-XXXX');
+                    valid = false;
+                }
+
+                if (!valid) {
+                    errorMessage.innerHTML = messages.join('<br/>');
+                    errorMessage.style.display = 'block';
+
+                } else {
+                    errorMessage.style.display = 'none';
+
+                    const data = {'name':name.value, 'mail':email.value, 'phone': phone.value, 'pass':confirmPasswordInput.value};
+                    console.log(data);
+                    fetch(`http://127.0.0.1:5000/apidj/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                    })
+                    .then(response => response.json())
+                    .then(dat => {
+                        if (dat['id']){
+                            localStorage.setItem('djId_dj', dat['id']);
+                            console.log('yeah');
+
+                            window.location.href = 'http://127.0.0.1:5500/views/djentry.html';
+                        }
+                        else{
+                            console.log("couldn't add to firebase");
+                        }
+
+                    })
+                    .catch(error => console.error('Error:', error));
+                }
+            });
+        });
+
+
+        
+    </script>
+</body>
+</html>

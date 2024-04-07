@@ -16,28 +16,33 @@ auth = firebase.auth()
 
 def login(email, password):
     print("login in ...")
+    ans = False
 
     try:
         login = auth.sign_in_with_email_and_password(email, password)
         print('login sucessful')
-    
+        ans = True
     except:
         print('login did not work')
 
-    return
+    return ans
 
 def signup(email, password):
     print('signup..')
+    ans = False
 
     try:
         sign = auth.create_user_with_email_and_password(email, password)
         print('sign up sucessful')
+        ans = True
     except:
         print('sign up not sucessful')
 
-    return 
+    return ans
 
+# if __name__ == "__main__":
 
+#     signup('yvanrich@gmail.com','Abcd1234')
 
 
 

@@ -14,6 +14,9 @@ import os
 import requests
 from dotenv import load_dotenv
 from app.encode_decode import sound_breathing
+from app.auth import login, signup
+import bcrypt
+
 
 CORS(app, resources={r"/*": {"origins": "*"}})
 
@@ -268,10 +271,40 @@ def create_event():
     db.session.commit()
     return {'id':event.id, 'name':event.name, 'dj_id': event.dj_id}
 
+
+@app.route('/apidj/create', methods=['POST'])
+def create_dj():
+    data = request.get_json()
+    result = signup(data['mail'], data['pass'])
+    
+    if result:
+        pass_bytes = data['pass'].encode('utf-8')
+        hashed = bcrypt.hashpw(pass_bytes, bcrypt.gensalt())
+        dj = DJ(username=data['name'], phone=data['phone'], email=data['mail'], password=hashed) 
+        db.session.add(dj)
+        db.session.commit()
+
+        return {'id':dj.id}
+    
+    return {}
+
+@app.route('/apidj/check', methods=['POST'])
+def confirm_dj():
+
+    data = request.get_json()
+    ans = login(data['mail'], data['pass'])
+    if ans:
+        pass_bytes = data['pass'].encode('utf-8')
+        dj = db.session.execute(select(DJ.id, DJ.password).where(DJ.email == data['mail'])).first()
+        # print(dj.id)
+    
+        return {'id':dj.id, 'exist': True, 'valid_password':bcrypt.checkpw(pass_bytes, dj.password)} if dj.id else {'exist':False}
+    
+    return {'exist':False}
+
+
 def search_songs(title, singer):
 
-
-    
     url = os.environ.get('FM_URL') #&track=Believe&api_key=api&format=json
     track = '&track=' + title
     artist = '&artist=' + singer
@@ -337,7 +370,7 @@ def listen_song():
                 info['title'] = all_dat['track']['title']
                 info['artist'] = all_dat['track']['subtitle']
             else:
-                info['title'] = all_dat['timestamp']
+                info['title'] = "Didn't recognize the song, try again!"
                 info['artist'] = all_dat['timezone']
 
             
