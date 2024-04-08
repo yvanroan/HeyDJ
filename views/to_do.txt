@@ -75,3 +75,15 @@ so using orm payed off
 now we have to be able to create users from the page, and deal with authentication.
 
 
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+the reason why you weren't able to install in your venv was because the path that pip is using for the
+installation is that of our local(global).
+
+you need to make sure that you activated your venv then you do 'which pip' to see where it points, if 
+it points towards another directory, do this 'export PATH="/home/yvan/Desktop/projects/project_name/venv/bin:$PATH" '
+
+if it points towards you already just delete your venv and create a new one, and create a requirements.txt with all 
+the imports you need
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
