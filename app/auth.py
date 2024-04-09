@@ -1,7 +1,13 @@
 import pyrebase
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+api = os.environ.get('fire_apiKey')
 
 firebase_config = {
-    'apiKey': "AIzaSyDUrmUKQ6Ql-7K1PJtrWQPEwKt6hhz6ZOo",
+    'apiKey': api,
     'authDomain': "auth-dj.firebaseapp.com",
     'projectId': "auth-dj",
     'storageBucket': "auth-dj.appspot.com",
