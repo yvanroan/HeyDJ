@@ -1,16 +1,17 @@
 Next>> in the Buildingg!!!!!!
 
 Flow
+![bluelock_isagiyoichi_puzzle](https://github.com/yvanroan/HeyDJ/assets/42220010/627b1ade-a4ae-4b70-b50b-c2a16f25843c)
+
 
 1) Dj setup
 
-    To use this app, you would have to go to the link below and login using these credidentials
+    To use the [live project](https://next77-d78d18831bdf.herokuapp.com/), use the credidentials below
 
-    https://next77-d78d18831bdf.herokuapp.com/
     email: abcd123@gmail.com
     password: Abcd1234
 
-    Or, you could register using the register button.
+    Or, you could register using the register button(should be on the page if you clicked on the live project link).
 
     After this you'll be asked to enter an event name, enter whatever picks your interest and cotinue.
 
@@ -28,9 +29,11 @@ Flow
 
 3) User sending request
 
-    You should have hopefully reached the user screen now. All you have to do is enter the correct spelling of both the artist and the title you have in mind. note that if the song does not exist your request won't be sent and in some rare cases, the song might not exist in our api.
+    You should have hopefully reached the user screen now.
+    All you have to do is enter the correct spelling of both the artist and the title you have in mind.
+    Note that if the song does not exist your request won't be sent and in some rare cases, the song might not exist in our api.
 
-4) DJ recieving and processing request
+5) DJ recieving and processing request
 
     You would have to reload your screen to see the request being sent. (working on making this more efficient)
     The songs recieved are in the Dj's stack and he can either play them or just straight up remove them.
@@ -40,7 +43,7 @@ Flow
 
     In both cases if the id is a valid one the request should leave the stack.
 
-5) End Event(In progress)
+6) End Event(In progress)
 
     Once the DJ is done with his party, he clicks on the "End Event" button and the party stops for everyone.
     Every request in the DJ's stack is rejected and the user is notified of the party's end.
