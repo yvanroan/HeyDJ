@@ -21,13 +21,15 @@ Flow
 
     if you reached the dj screen, you should see and id next to your event name. Just like this
         "Event: Party Next Door(id: 11)"
+   
+![image](https://github.com/yvanroan/HeyDJ/assets/42220010/596a13aa-f576-41a0-8cf1-ed1d51521395)
 
     copy the link below and replace '{id}' with the id you got on your Dj screen. 
         https://next77-d78d18831bdf.herokuapp.com/userentry?event_id={id}
 
     To ease the user's experience, this will eventually be replaced by a qrcode
 
-3) User sending request
+4) User sending request
 
     You should have hopefully reached the user screen now.
     All you have to do is enter the correct spelling of both the artist and the title you have in mind.
@@ -40,6 +42,7 @@ Flow
 
     If he choose to reject the request, he needs to enter the id of the request and slide to remove the request.
     If he choose to accept the request, the song must be playing before he enters the request id and click play.
+![Screenshot from 2024-04-10 16-12-34](https://github.com/yvanroan/HeyDJ/assets/42220010/5906b22e-1a39-463b-96e1-e22fdd492df2)
 
     In both cases if the id is a valid one the request should leave the stack.
 
