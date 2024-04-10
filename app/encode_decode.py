@@ -2,11 +2,12 @@ from pydub import AudioSegment
 import base64
 import io
 import os
+from pathlib import Path
 
 
 def sound_breathing(file):
-
-    filename = os.path.join('/tmp', file.filename)
+    access = Path(__file__).parent
+    filename = os.path.join(access, file.filename)
     file.save(filename)
     sound = AudioSegment.from_file(filename)
     print('yessa')

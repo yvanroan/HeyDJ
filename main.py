@@ -6,6 +6,8 @@
 from app.models import User, DJ, Song
 from app import db, app
 
+from pathlib import Path
+
 
 print("main")
 

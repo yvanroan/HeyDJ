@@ -238,7 +238,6 @@ def create_request():
     data = request.get_json()
 
     ans = search_songs(data['song_title'], data['song_artist'])
-    print(ans)
 
     if 'name' in ans:
         print('in')
@@ -267,7 +266,7 @@ def create_request():
         print('nah')
         return ans
 
-    return {}
+    return {'msg':'api issue'}
 
 @app.route('/api/request_delta', methods=['POST'])
 def update_request():
@@ -350,15 +349,18 @@ def confirm_dj():
 
 def search_songs(title, singer):
 
-    url = os.environ.get('FM_URL') #&track=Believe&api_key=api&format=json
+    url = os.environ.get('FM_URL') 
+    print(url)
+    url+='=track.search'
     track = '&track=' + title
     artist = '&artist=' + singer
     API_KEY= os.environ.get('FM_API_key')
-    # ax = os.environ.get('FLASK_APP')
-    # print(API_KEY,ax)
     rest = '&api_key='+ API_KEY + '&format=json'
 
     link = url + track + artist + rest
+
+    print(link)
+    # return ''
 
     try:
         response = requests.get(link)
@@ -367,9 +369,8 @@ def search_songs(title, singer):
         response.raise_for_status()
         
         all_dat = response.json()  # Parse JSON data
-        # print(all_data)
+        
         dat = all_dat['results']['trackmatches']['track']
-
         info = {}
 
         if len(dat)>0:

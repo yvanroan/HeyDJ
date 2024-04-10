@@ -103,22 +103,7 @@
             if (!response.ok) throw new Error('Network response was not ok');
             return response.json();
           }).then(data => {
-              const song = document.getElementById('songDropdown');
-              const event = document.getElementById('eventDropdown');
 
-              
-
-              // let result_song = data.Songs.id.map((_, index) => {
-              //                   return Object.keys(data.Songs).map(key => `${key}: ${data.Songs[key][index]}`).join(' , ');
-              //                 });
-
-              // result_song.forEach(i => {
-              //   info = `Song ${i}`;
-              //   const option = new Option(info, info);
-              //   key = info.split(" ")[5];
-              //   option.id = `song_${key}`;
-              //   song.add(option);
-              // });
 
               if(Object.keys(data.Requests).length !== 0){
                 let requests_data = data.Requests.id.map((_, index) => {

@@ -57,6 +57,7 @@
     <script>
       
       window.onload = fetchData_dj();
+      
       let title = ''
       let artist = ''
       let requests_data = [];
@@ -171,7 +172,7 @@
           console.log("enter a good id")
         }
 
-        // fetchData();
+        location.reload();
       }
       
       function areSimilarCaseInsensitive(text1, text2) {
@@ -218,12 +219,8 @@
                     const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                     const formData = new FormData();
                     formData.append("audio", audioBlob);
+                    
 
-                    // isRecording=  false;
-                    // title = 'Dumebi';
-                    // artist = 'Rema';
-                    // console.log(title, artist);
-                    // resolve([title, artist]);
 
                     fetch("{{ url_for('listen_song') }}", {
                       method: "POST",
