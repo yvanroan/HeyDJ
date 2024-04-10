@@ -262,61 +262,6 @@
 
       }
 
-
-      // document.getElementById("recordButton").addEventListener("click", () => {
-      //     if (isRecording) {
-      //         return; // Exit if a recording is already in progress
-      //     }
-          
-      //     isRecording = true; // Set the recording flag
-      //     navigator.mediaDevices.getUserMedia({ audio: true })
-      //         .then(stream => {
-      //             mediaRecorder = new MediaRecorder(stream);
-      //             mediaRecorder.start();
-      //             audioChunks = [];
-
-      //             mediaRecorder.ondataavailable = event => {
-      //                 audioChunks.push(event.data);
-      //             };
-
-      //             setTimeout(() => {
-      //                 // Stop recording after 4 seconds
-      //                 mediaRecorder.stop();
-      //                 // Disable the button for 10 seconds (cooldown period)
-      //                 document.getElementById("recordButton").disabled = true;
-      //                 setTimeout(() => {
-      //                     document.getElementById("recordButton").disabled = false;
-      //                     isRecording = false; // Reset the recording flag after cooldown
-      //                 }, 10000); // 10 seconds cooldown
-      //             }, 4000); // 4 seconds recording
-
-      //             mediaRecorder.onstop = () => {
-      //               const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-      //               const formData = new FormData();
-      //               formData.append("audio", audioBlob);
-
-      //               fetch("http://127.0.0.1:5000/apidj/upload-audio", {
-      //                 method: "POST",
-      //                 body: formData,
-      //               }).then(response => {
-
-      //                 if (!response.ok) {
-      //                   throw new Error('Network response was not ok');
-      //                 }
-      //                 // console.log(response);
-                      
-      //                 return response.json()
-      //               })
-      //                 .then(data => {
-      //                   console.log(data); // Handle the response data, e.g., the transcribed text
-      //                   title = data["title"];
-      //                   artist = data["artist"];
-
-      //                 });
-      //             };
-      //         });
-      // });
-
       
 
       document.getElementById('mySlider').addEventListener('input', function(e) {

@@ -1,36 +1,3 @@
-<!--/*
-the homepage will be divided in two section. 
-One section for the user and the other for the DJ.
-the flow remains the same as the one outlined in the docs.
-once a user and a dj are created they can pursue their respective actions.
-the site will need to load everytime an action is performed because i want to see the live action(prints/ comments) 
-
-users:
-we have a button that creates users.
-there is a dropdown where we can see the users created and choose which ones to use.
-for each user, we can decide which songs we want to submit in a dropdown.
-we also need to have a drop down for the dj recieving this request(song), we will set 5 dj for a start.
-once the user and songs are chosen, we can send the request. this is a button.
-
-there is somekind of panel which prints the action made like creating a user or submitting a request.
-
-
-DJ:
-we have a button that creates Dj.
-there is a dropdown where we can see the dj created and choose which ones to use.
-
-we have additional button for each action of the dj( in models.py)
-we actually have to show the list of song submited to the dj(request) of the dj, all the songs added to it and potentially different ways of ordering it.
-aptitude to delete or play a song, these are button.
-the dj has a button to close the night.
-
-there is somekind of panel which prints the action made like creating a user or submitting a request.
-
-
-
-*/-->
-
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -119,7 +86,7 @@ there is somekind of panel which prints the action made like creating a user or 
         const djid = parseInt(document.getElementById('djInput').value);
         data = {'name':name, 'dj':djid};
         console.log(data);
-        fetch(`http://127.0.0.1:5000/api/event`, {
+        fetch("{{ url_for('create_event') }}", {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -139,7 +106,7 @@ there is somekind of panel which prints the action made like creating a user or 
       function createUser() {
 
         const user = document.getElementById('userDropdown');
-        fetch(`http://127.0.0.1:5000/api/user`, {
+        fetch("{{ url_for('create_user') }}", {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -174,7 +141,7 @@ there is somekind of panel which prints the action made like creating a user or 
 
         var data = {'user_id':userId, 'song_id':songId, 'dj_id': djId, 'event_id':localStorage.getItem('eventId')};
         console.log(data)
-        fetch(`http://127.0.0.1:5000/api/request`, {
+        fetch("{{ url_for('create_request') }}", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -199,7 +166,7 @@ there is somekind of panel which prints the action made like creating a user or 
           console.log("create an event first");
           return {}
         }
-        fetch(`http://127.0.0.1:5000/api`, {
+        fetch("{{ url_for('get_data') }}", {
           method: 'POST', // or 'POST', etc.
           headers: {
                 'Content-Type': 'application/json',
@@ -302,7 +269,7 @@ there is somekind of panel which prints the action made like creating a user or 
               cancel = true;
             }
             data ={'id': i, 'cancel': cancel};
-            fetch(`http://127.0.0.1:5000/api/request_delta`, {
+            fetch("{{ url_for('update_request') }}", {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
@@ -368,10 +335,34 @@ there is somekind of panel which prints the action made like creating a user or 
       });
 
       function endEvent(){
-        document.getElementById('endEventButton').addEventListener('click', function() {
-          localStorage.removeItem('eventId');
-          // Optionally, take further actions after ending the event.
-        });
+        console.log('deletion of request started...')
+        send = {'req_id': req_id};
+        fetch("{{ url_for('end_session') }}", 
+          {
+            method: "POST",
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(send),
+          }).then(response => 
+              {
+
+                if (!response.ok) {
+                  throw new Error('Network response was not ok');
+                }
+                      
+                return response.json()
+              }).then(data => 
+              {
+                console.log(data); // Handle the response data, e.g., the transcribed text
+              }).catch(err => 
+              {
+                console.error(err);
+              });
+        
+        
+        localStorage.removeItem('eventId_dj');
+        location.reload()
       }
 
     </script>
