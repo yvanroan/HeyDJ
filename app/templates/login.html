@@ -46,7 +46,7 @@
 
             const data = {'mail':email, 'pass':pass};
             console.log(data);
-            fetch(`http://127.0.0.1:5000/apidj/check`, {
+            fetch("{{ url_for('confirm_dj') }}", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
