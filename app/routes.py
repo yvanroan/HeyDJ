@@ -7,7 +7,7 @@
 from flask_cors import CORS
 from app import app, db
 from app.models import User, DJ, Song, Request, Event
-from flask import jsonify, request
+from flask import jsonify, request, render_template
 import collections
 from sqlalchemy import select, update
 import os
@@ -21,6 +21,37 @@ import bcrypt
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 load_dotenv()
+
+@app.route('/')
+@app.route('/login')
+def start():
+    return render_template('login.html')
+
+@app.route('/register')
+def register():
+    return render_template('register.html')
+
+@app.route('/userentry')
+def userentry():
+    return render_template('userentry.html')
+
+@app.route('/user')
+def user():
+    return render_template('user.html')
+
+@app.route('/homelandooo')
+def homelandooo():
+    return render_template('homepage.html')
+
+@app.route('/djentry')
+def djentry():
+    return render_template('djentry.html')
+
+@app.route('/dj')
+def dj():
+    return render_template('dj.html')
+
+
 
 @app.route('/api', methods=['POST'])
 def get_data():
@@ -253,6 +284,20 @@ def update_request():
     # print("yes")
     return "updated req"
 
+@app.route('/api/end', methods=['POST'])
+def end_session():
+    data = request.get_json()
+
+    for req_id in data['req_id']:
+
+        db.session.execute(update(Request).where(Request.id == req_id).values(in_stack= False))
+        db.session.execute(update(Request).where(Request.id == req_id).values(cancelled = True))
+
+    db.session.commit()
+    print('party ended')
+    # print("yes")
+    return {'done':'we ended the session'}
+
 @app.route('/api/user', methods=['POST'])
 def create_user():    
     # Create a new Item instance
@@ -361,7 +406,7 @@ def listen_song():
     }
     try:
         response = requests.post(url, data=payload, headers=headers, params=querystring)
-        print(response.json())
+        # print(response.json())
 
         all_dat = response.json()
         info = {}

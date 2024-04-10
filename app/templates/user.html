@@ -9,7 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NEXT >></title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
   </head>
 
   <body>
@@ -60,7 +60,7 @@
 
         var data = {'user_id':localStorage.getItem('userId'), 'song_title':song_title.value, 'song_artist':song_artist.value, 'dj_id': localStorage.getItem('djId_user'), 'event_id':localStorage.getItem('eventId_user')};
         console.log(data)
-        fetch(`http://127.0.0.1:5000/api/request`, {
+        fetch("{{ url_for('create_request') }}", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -93,7 +93,7 @@
           console.log("How did you get here? you got no event id or userid");
           return {}
         }
-        fetch(`http://127.0.0.1:5000/apiuser`, {
+        fetch("{{ url_for('get_data_user') }}" , {
           method: 'POST', // or 'POST', etc.
           headers: {
                 'Content-Type': 'application/json',
