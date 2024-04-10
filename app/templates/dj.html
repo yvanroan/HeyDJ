@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NEXT >></title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
   </head>
 
   <body>
@@ -73,7 +73,7 @@
           console.log("create an event first");
           return {}
         }
-        fetch(`http://127.0.0.1:5000/apidj`, {
+        fetch("{{ url_for('get_data_dj') }}", {
           method: 'POST', // or 'POST', etc.
           headers: {
                 'Content-Type': 'application/json',
@@ -127,7 +127,6 @@
         var valid_id = false;
         var cancel = false;
         var song_match = false;
-        let index
 
         for (let i = 0; i < req_id.length; i++) {
           
@@ -150,7 +149,7 @@
 
             if(song_match || cancel){
               data ={'id': id, 'cancel': cancel};
-              fetch(`http://127.0.0.1:5000/api/request_delta`, {
+              fetch("{{ url_for('update_request') }}", {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -226,7 +225,7 @@
                     // console.log(title, artist);
                     // resolve([title, artist]);
 
-                    fetch("http://127.0.0.1:5000/apidj/upload-audio", {
+                    fetch("{{ url_for('listen_song') }}", {
                       method: "POST",
                       body: formData,
                     }).then(response => {
@@ -349,10 +348,34 @@
 
 
       function endEvent(){
-        document.getElementById('endEventButton').addEventListener('click', function() {
-          localStorage.removeItem('eventId');
-          // Optionally, take further actions after ending the event.
-        });
+        console.log('deletion of request started...')
+        send = {'req_id': req_id};
+        fetch("{{ url_for('end_session') }}", 
+          {
+            method: "POST",
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(send),
+          }).then(response => 
+              {
+
+                if (!response.ok) {
+                  throw new Error('Network response was not ok');
+                }
+                      
+                return response.json()
+              }).then(data => 
+              {
+                console.log(data); // Handle the response data, e.g., the transcribed text
+              }).catch(err => 
+              {
+                console.error(err);
+              });
+        
+        
+        localStorage.removeItem('eventId_dj');
+        location.reload()
       }
 
     </script>

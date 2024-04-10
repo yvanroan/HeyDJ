@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NEXT >> Login</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
 </head>
 <body>
     <div class="header">
@@ -22,7 +22,17 @@
                 <input type="password" id="password" name="password" required>
             </div>
             <button type="submit">Login</button>
+            
         </form>
+
+        <a href="{{ url_for('register') }}" class="form-group">
+            <button>Register here!</button>
+        </a>
+
+        <a href="{{ url_for('userentry') }}" class="form-group">
+            <button>User here!</button>
+        </a>
+        
     </div>
 
     <script>
@@ -55,7 +65,7 @@
                     localStorage.setItem('djId_dj', dat['id']);
                     console.log('yeah');
 
-                    window.location.href = 'http://127.0.0.1:5500/views/djentry.html';
+                    window.location.href = "{{ url_for('djentry') }}";
                 }
 
             })
