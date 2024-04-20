@@ -6,7 +6,7 @@
 
 from flask_cors import CORS
 from app import app, db
-from app.models import User, DJ, Song, Request, Event
+from app.models import App_user, DJ, Song, Request, Event
 from flask import jsonify, request, render_template
 import collections
 from sqlalchemy import select, update
@@ -63,7 +63,7 @@ def get_data():
     print("ys")
     # add_song()
     event = db.session.execute(select(Event.id, Event.name, Event.dj_id).where(Event.id == event_id)).first()
-    users = db.session.execute(select(User.id)).all()
+    users = db.session.execute(select(App_user.id)).all()
     songs = db.session.execute(select(Song.id, Song.artist, Song.name)).all()
     dj = db.session.execute(select(DJ.id, DJ.username).where(DJ.id == event.dj_id) ).first()
     reqs = db.session.execute(select(Request.id, Request.timestamp, Request.dj_id, Request.song_id).where(Request.in_stack == True).order_by(Request.id.desc())).all()
@@ -206,8 +206,8 @@ def seeding():
 
     dj=DJ(username='Jay')
 
-    u1 = User()
-    u2 = User()
+    u1 = App_user()
+    u2 = App_user()
     s1 = Song(name='a', artist='rocker', genre='rock')
     s2 = Song(name='b', artist='rocker', genre='rock')
     s3 = Song(name='c', artist='rocker', genre='rock')
@@ -243,7 +243,7 @@ def create_request():
         print('in')
         songs = db.session.execute(select(Song.id).where(Song.name == ans['name']).where(Song.artist == ans['artist'])).first()
         
-        user = User.query.get(data['user_id'])
+        user = App_user.query.get(data['user_id'])
         req =''
 
         if not songs:
@@ -255,18 +255,24 @@ def create_request():
         
         else:
             print('ok1')
-            print(songs.id)
-            req = user.create_request(songs.id,data['dj_id'], data['event_id'])
+            print(songs.id,data['dj_id'], data['event_id'])
+            req = user.create_request(songs.id, data['dj_id'], data['event_id'])
+            
 
-        db.session.add(req)
-        db.session.commit()
-        print('yessir')
+
+        if req !='':
+            db.session.add(req)
+            db.session.commit()
+            print('yessir')
+        else:
+            print('the request is cooked')
+            return {'msg':'api issue'}
 
     else:
         print('nah')
-        return ans
+        return {'msg':'the song is not available at the moment'}
 
-    return {'msg':'api issue'}
+    return {'good':'We good'}
 
 @app.route('/api/request_delta', methods=['POST'])
 def update_request():
@@ -300,7 +306,7 @@ def end_session():
 @app.route('/api/user', methods=['POST'])
 def create_user():    
     # Create a new Item instance
-    user = User()
+    user = App_user()
     db.session.add(user)
     db.session.commit()
 
@@ -342,7 +348,7 @@ def confirm_dj():
         dj = db.session.execute(select(DJ.id, DJ.password).where(DJ.email == data['mail'])).first()
         # print(dj.id)
     
-        return {'id':dj.id, 'exist': True, 'valid_password':bcrypt.checkpw(pass_bytes, dj.password)} if dj.id else {'exist':False}
+        return {'id':dj.id, 'exist': True, 'valid_password':bcrypt.checkpw(pass_bytes, dj.password)} if dj.id else {'exist':'the password is in firebase but not in the db'}
     
     return {'exist':False}
 

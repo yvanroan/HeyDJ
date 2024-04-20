@@ -159,3 +159,105 @@ label {
     display: block;
     margin-bottom: 5px;
 }
+
+/* #requests {
+    display: flex;
+    flex-direction: column;
+    background-color: #ECF0F1;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin: 20px 0;
+    padding: 20px;
+    border-radius: 10px;
+  } */
+
+
+#requests h2 {
+    color: #2C3E50;
+}
+  
+/* .request {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    width: 75%;
+    margin: 5px 0;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    text-align: center;
+    user-select: none; /* prevent text selection */
+    /* touch-action: pan-x; optimize for touch panning
+    overflow: hidden;
+  } */
+
+  #requests {
+    overflow-x: hidden; /* Hide the side backgrounds initially */
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+      flex-direction: column;
+      /* width: 100%;
+      max-width: 300px;
+      margin: 20px auto; */
+      background-color: #ECF0F1;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      margin: 20px 0;
+      padding: 20px;
+      border-radius: 10px;
+  }
+  
+  .request {
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    background-color: #000000; /* The color of the swipable item */
+  
+  /*     padding: 10px; */
+      width: 95%;
+      margin: 5px 0;
+      background-color: #f0f0f0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      user-select: none; /* prevent text selection */
+      touch-action: pan-x; /* optimize for touch panning */
+      overflow: hidden;
+    
+  }
+  
+  .swipe-background {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 30%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000000;
+    font-weight: bold;
+    z-index: 0;
+    
+  }
+  
+  .left-action {
+    right: 0;
+    background-color: #ff3b30; /* Red for delete */
+  }
+  
+  .right-action {
+    left: 0;
+    background-color: #4CD964; /* Green for play */
+  }
+  
+  .request-content {
+    padding: 20px;
+    z-index: 1;
+    background-color: #fff; /* Must match swipe-item's background */
+    width: 100%; /* Ensure it covers the swipe background */
+    position: relative; /* Bring the content above the backgrounds */
+  }
+  
+  

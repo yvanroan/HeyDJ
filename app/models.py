@@ -11,6 +11,8 @@ from dataclasses import dataclass
 
 @dataclass
 class DJ(db.Model):
+
+    __tablename__ = 'dj'
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     username: so.Mapped[str] = so.mapped_column(sa.String(64), index=True)
     phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
@@ -94,9 +96,11 @@ class DJ(db.Model):
         return self.played
   
 @dataclass
-class User(db.Model):
+class App_user(db.Model):
+
+    __tablename__ = 'app_user'
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    outgoing_request: so.WriteOnlyMapped['Request'] = so.relationship(back_populates='user')
+    outgoing_request: so.WriteOnlyMapped['Request'] = so.relationship(back_populates='app_user')
 
     # print(f"The night slayer {id} has join the party!")
 
@@ -104,7 +108,17 @@ class User(db.Model):
         return '<User {}>'.format(self.id)
     
     def create_request(self, song_id,djid, event_id):
-        # print("a request is being created")
+        print("a request is being created")
+        
+        cur_dj = db.session.get(DJ,djid).username
+        cur_song = db.session.get(Song, song_id)
+
+        if not cur_dj:
+            print("can't find that dj in the db")
+
+        if not cur_song:
+            print("can't find that song in the db")
+
         request = Request(in_stack=True, dj_id= djid,song_id=song_id, user_id=self.id, event_id= event_id, cancelled=False)
         cur_dj = db.session.get(DJ,djid).username
         cur_song = db.session.get(Song, song_id)
@@ -118,6 +132,7 @@ class User(db.Model):
     
 @dataclass
 class Song(db.Model):
+    __tablename__ = 'song'
     id: so.Mapped[int] = so.mapped_column(primary_key=True) 
     name: so.Mapped[str] = so.mapped_column(sa.String, index=True)
     artist: so.Mapped[str] = so.mapped_column(sa.String)
@@ -128,6 +143,7 @@ class Song(db.Model):
         return '<Song: {name} by {artist}>'.format(name=self.name, artist=self.artist)
 
 class Event(db.Model):
+    __tablename__ = 'event'
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     name: so.Mapped[str] = so.mapped_column(sa.String)
     place: so.Mapped[Optional[str]] = so.mapped_column(sa.String)
@@ -138,15 +154,16 @@ class Event(db.Model):
 
 @dataclass  
 class Request(db.Model):
+    __tablename__ = 'request'
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     timestamp: so.Mapped[datetime] = so.mapped_column(default=lambda: datetime.now(timezone.utc))
     in_stack: so.Mapped[bool] = so.mapped_column(sa.Boolean)
     dj_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(DJ.id), index=True)
-    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id))
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(App_user.id))
     song_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Song.id), index=True)
     event_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Event.id), index=True)
     cancelled: so.Mapped[bool] = so.mapped_column(sa.Boolean)
-    user: so.Mapped[User] = so.relationship(back_populates='outgoing_request')
+    app_user: so.Mapped[App_user] = so.relationship(back_populates='outgoing_request')
     song: so.Mapped[Song] = so.relationship(back_populates='ongoing_request')
     dj: so.Mapped[DJ] = so.relationship(back_populates='incoming_request')
     event: so.Mapped[Event] = so.relationship(back_populates='event_request')

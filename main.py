@@ -3,7 +3,7 @@
 # https://stackoverflow.com/questions/22711087/flask-importerror-no-module-named-app
 # https://stackoverflow.com/questions/23340812/python-sqlite-table-a-has-no-column-named-x
 
-from app.models import User, DJ, Song
+from app.models import App_user, DJ, Song
 from app import db, app
 
 from pathlib import Path
@@ -19,8 +19,8 @@ def seed_database():
 
     dj=DJ(username='orelsan', phone='2111110000', email='orelsan@example.com', password='abcd')
 
-    u1 = User()
-    u2 = User()
+    u1 = App_user()
+    u2 = App_user()
 
     s1 = Song(name='a', artist='rocker', genre='rock')
     s2 = Song(name='b', artist='rocker', genre='rock')

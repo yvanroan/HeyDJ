@@ -55,4 +55,8 @@ sneak peak at what his users are thinking while maintaining control throughout t
 
 ## Future Improvements
 
-1) let me know what y'all would like to see.
+1) allow multiple dj to manage the an event sequentially
+
+2)  let me know what y'all would like to see.
+
+

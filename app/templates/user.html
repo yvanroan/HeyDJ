@@ -29,7 +29,7 @@
         <div>
           <!-- History -->
           <div id="actionPanel" class="card highlight">
-              <h3>History</h3>
+              <h3>Your Requests</h3>
           </div>
         </div>
         <!-- Stack -->
@@ -44,7 +44,9 @@
 
     <script>
       
-      window.onload = fetchData_user();      
+      window.onload = fetchData_user();   
+      
+      let req_id = [];   
 
       function createRequest(){
 
@@ -59,7 +61,7 @@
         
 
         var data = {'user_id':localStorage.getItem('userId'), 'song_title':song_title.value, 'song_artist':song_artist.value, 'dj_id': localStorage.getItem('djId_user'), 'event_id':localStorage.getItem('eventId_user')};
-        console.log(data)
+        // console.log(data)
         fetch("{{ url_for('create_request') }}", {
             method: 'POST',
             headers: {
@@ -106,6 +108,7 @@
 
 
               if(Object.keys(data.Requests).length !== 0){
+                req_id = data.Requests.id;
                 let requests_data = data.Requests.id.map((_, index) => {
                                 return Object.keys(data.Requests)
                                 .filter(key => ['song_name', 'song_artist', 'ask', 'timestamp'].includes(key))
@@ -114,15 +117,39 @@
                               });
 
                 console.log(requests_data);
+
+                const session = document.getElementById('actionPanel');
                 
-                requests_data.forEach(i => {
-                  logAction(i);
+                requests_data.forEach((i, idx) => {
+                  let request = document.createElement('div');
+                  request.setAttribute('class','request');
+                  
+                  var content = document.createElement('div');
+                  content.setAttribute('class','request-content');
+                  content.setAttribute('data-id', req_id[idx]);
+                  content.textContent = i;
+
+                  var delete_action = document.createElement('div');
+                  delete_action.setAttribute('class','swipe-background left-action');
+                  delete_action.textContent = 'delete';
+
+                  var play_action = document.createElement('div');
+                  play_action.setAttribute('class','swipe-background right-action');
+                  play_action.textContent = 'play';
+
+                  request.appendChild(play_action);
+                  request.appendChild(content);
+                  request.appendChild(delete_action);
+                  
+                  session.appendChild(request);
+                  
                 }); 
               }
               
               document.getElementById("eventId").innerHTML = 'Event: ' + data.Event['name'] + '(id: ' + data.Event['id'] + ')';
 
             })
+            .then(()=> swiping())
           .catch(error => console.error('Error fetching items:', error));
       }
 
@@ -134,12 +161,110 @@
       }
 
 
+      async function removeRequest(data_id){
+
+        // const session = document.querySelectorAll('#myList li');
+
+        const id = parseInt(data_id);
+        // console.log(id);
+
+        data ={'id': id, 'cancel': false};
+        fetch("{{ url_for('update_request') }}", {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)  // Convert the JavaScript object to a JSON string
+          })
+          .catch((error) => {
+            console.error('Error:', error);
+          });
+        
+
+        location.reload();
+        }
+
+
       function endEvent(){
-        document.getElementById('endEventButton').addEventListener('click', function() {
-          localStorage.removeItem('eventId');
-          // Optionally, take further actions after ending the event.
-        });
+        console.log('deletion of request started...')
+        send = {'req_id': req_id};
+        fetch("{{ url_for('end_session') }}", 
+          {
+            method: "POST",
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(send),
+          }).then(response => 
+              {
+
+                if (!response.ok) {
+                  throw new Error('Network response was not ok');
+                }
+                      
+                return response.json()
+              }).then(data => 
+              {
+                console.log(data); // Handle the response data, e.g., the transcribed text
+              }).catch(err => 
+              {
+                console.error(err);
+              });
+        
+        
+        localStorage.removeItem('eventId_user');
+        location.reload()
       }
+
+      function swiping(){
+
+        document.querySelectorAll('.request-content').forEach(item => {
+          let startX;
+          const threshold = 150; // Minimum swipe distance for an action to occur
+          const delet = document.getElementsByClassName("swipe-background")[0];
+          const width = delet.offsetWidth;
+          // console.log(item.dataset.id);
+          // console.log(width);
+
+          item.addEventListener('mousedown', startSwipe, false);
+          item.addEventListener('touchstart', startSwipe, false);
+
+          function startSwipe(e) {
+            startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+            this.classList.add('dragging');
+            window.addEventListener('mousemove', onSwipe, false);
+            window.addEventListener('touchmove', onSwipe, false);
+            window.addEventListener('mouseup', endSwipe, false);
+            window.addEventListener('touchend', endSwipe, false);
+          }
+
+          function onSwipe(e) {
+            const x = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            const deltaX = x - startX;
+            if (deltaX < 0) { // Swiping left
+              item.style.transform = `translateX(${deltaX}px)`;
+            } 
+          }
+
+          function endSwipe(e) {
+            item.classList.remove('dragging');
+            const x = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
+            const deltaX = x - startX;
+            if (deltaX <= -width) { // Swiped left
+              removeRequest(item.dataset.id);
+              console.log('Delete action triggered');
+              // Add your delete logic here
+            } 
+            item.style.transform = ''; // Reset position
+            window.removeEventListener('mousemove', onSwipe, false);
+            window.removeEventListener('touchmove', onSwipe, false);
+            window.removeEventListener('mouseup', endSwipe, false);
+            window.removeEventListener('touchend', endSwipe, false);
+          }
+        });
+
+        }
+
 
     </script>
   </body>
