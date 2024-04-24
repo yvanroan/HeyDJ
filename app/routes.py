@@ -15,10 +15,13 @@ import requests
 from dotenv import load_dotenv
 from app.encode_decode import sound_breathing
 from app.auth import login, signup
-import bcrypt
+from flask_socketio import SocketIO, join_room,leave_room
+
 
 
 CORS(app, resources={r"/*": {"origins": "*"}})
+socketio = SocketIO(app)
+
 
 load_dotenv()
 
@@ -51,6 +54,10 @@ def djentry():
 def dj():
     return render_template('dj.html')
 
+@app.route('/exit')
+def exit():
+    return render_template('exit.html')
+
 
 
 @app.route('/api', methods=['POST'])
@@ -66,7 +73,7 @@ def get_data():
     users = db.session.execute(select(App_user.id)).all()
     songs = db.session.execute(select(Song.id, Song.artist, Song.name)).all()
     dj = db.session.execute(select(DJ.id, DJ.username).where(DJ.id == event.dj_id) ).first()
-    reqs = db.session.execute(select(Request.id, Request.timestamp, Request.dj_id, Request.song_id).where(Request.in_stack == True).order_by(Request.id.desc())).all()
+    reqs = db.session.execute(select(Request.id, Request.timestamp,Request.user_id, Request.dj_id, Request.song_id).where(Request.in_stack == True).order_by(Request.id.desc())).all()
        
 
     event_obj, user_obj, dj_obj, song_obj, req_obj = {}, collections.defaultdict(list), {}, collections.defaultdict(list), collections.defaultdict(list)
@@ -118,8 +125,8 @@ def get_data_user():
     event = db.session.execute(select(Event.id, Event.name, Event.dj_id).where(Event.id == event_id)).first()
     songs = db.session.execute(select(Song.id, Song.artist, Song.name)).all()
     dj = db.session.execute(select(DJ.id, DJ.username).where(DJ.id == event.dj_id)).first()
-    reqs = db.session.execute(select(Request.id, Request.timestamp, Request.dj_id, Request.song_id).where(Request.in_stack == True).where(Request.user_id == user_id).order_by(Request.id.desc())).all()
-       
+    reqs = db.session.execute(select(Request.id, Request.timestamp, Request.dj_id, Request.song_id,Request.user_id).where(Request.in_stack == True).where(Request.user_id == user_id).order_by(Request.id.desc())).all()
+    
 
     event_obj, dj_obj, song_obj, req_obj = {}, {}, collections.defaultdict(list), collections.defaultdict(list)
     
@@ -137,8 +144,10 @@ def get_data_user():
     song_ids = []
 
     for req in reqs:
+
         
         if req.song_id in song_ids:
+            print(req.song_id,"get_data_user")
             continue
         
         ask =  len(db.session.execute(select(Request.id).where(Request.song_id == req.song_id).where(Request.user_id == user_id).where(Request.in_stack == True)).all())
@@ -155,6 +164,8 @@ def get_data_user():
         req_obj['song_name'].append(song_title)
         req_obj['song_artist'].append(song_artist)        
         req_obj['id'].append(req.id)
+
+    print(req_obj)
     
     return jsonify({'Djs':dj_obj,'Songs':song_obj, 'Requests':req_obj, 'Event':event_obj})
 
@@ -167,7 +178,7 @@ def get_data_dj():
 
     event = db.session.execute(select(Event.id, Event.name, Event.dj_id).where(Event.id == event_id)).first()
     dj = db.session.execute(select(DJ.id, DJ.username).where(DJ.id == event.dj_id)).first()
-    reqs = db.session.execute(select(Request.id, Request.timestamp, Request.dj_id, Request.song_id).where(Request.in_stack == True).where(Request.dj_id == event.dj_id).order_by(Request.id.desc())).all()
+    reqs = db.session.execute(select(Request.id, Request.timestamp,Request.user_id, Request.dj_id, Request.song_id).where(Request.in_stack == True).where(Request.event_id == event_id).where(Request.dj_id == event.dj_id).order_by(Request.id.desc())).all()
        
 
     event_obj, dj_obj, req_obj = {}, {}, collections.defaultdict(list)
@@ -199,7 +210,10 @@ def get_data_dj():
         req_obj['song_name'].append(song_title)
         req_obj['song_artist'].append(song_artist)        
         req_obj['id'].append(req.id)
-    
+        req_obj['room'].append('interaction_'+str(req.dj_id)+'_'+str(req.user_id))
+        
+
+    # print(req_obj)
     return jsonify({'Dj':dj_obj, 'Requests':req_obj, 'Event':event_obj})
 
 def seeding():
@@ -229,6 +243,7 @@ def seeding():
 def get_maindj():
     data = request.get_json()
     ev = Event.query.get(data['id'])
+
 
     return jsonify({'id': ev.dj_id})
 
@@ -264,6 +279,13 @@ def create_request():
             db.session.add(req)
             db.session.commit()
             print('yessir')
+
+            room = data['room']
+            print(room)
+
+            socketio.emit('req_created', {'user_id':req.user_id, 'dj_id':req.dj_id, 'event_id':req.event_id}, to=room)
+
+            
         else:
             print('the request is cooked')
             return {'msg':'api issue'}
@@ -281,24 +303,39 @@ def update_request():
 
     
     db.session.execute(update(Request).where(Request.id == data['id']).values(in_stack= False))
+    req = db.session.execute(select(Request.dj_id, Request.user_id,Request.event_id).where(Request.id == data['id'])).first()
     print('updated')
     if (data['cancel']):
         db.session.execute(update(Request).where(Request.id == data['id']).values(cancelled = True))
 
     db.session.commit()
+
+    room = data['room']
+
+    socketio.emit('req_updated',{'user_id':req.user_id, 'dj_id':req.dj_id, 'event_id':req.event_id},to=room)
     # print("yes")
     return "updated req"
 
 @app.route('/api/end', methods=['POST'])
 def end_session():
     data = request.get_json()
+    room = data['room']
+    req=''
 
     for req_id in data['req_id']:
 
         db.session.execute(update(Request).where(Request.id == req_id).values(in_stack= False))
         db.session.execute(update(Request).where(Request.id == req_id).values(cancelled = True))
 
+
     db.session.commit()
+    
+
+    if room !='IamDJ':
+        req = Request.query(data['req_id'][0])
+        socketio.emit('exit',{'user_id':req.user_id},room=room)
+        leave_room(room)
+
     print('party ended')
     # print("yes")
     return {'done':'we ended the session'}
@@ -321,15 +358,31 @@ def create_event():
     db.session.commit()
     return {'id':event.id, 'name':event.name, 'dj_id': event.dj_id}
 
+@app.route('/api/check_event_and_dj', methods=['POST'])
+def check_event_and_dj():
+    data=request.get_json()
+    event_id=data['ev_id']
+    dj_id = data['dj_id']
+
+    event = db.session.execute(select(Event.id,Event.dj_id).where(Event.id == event_id)).all()
+
+    
+
+    if len(event)==1:
+        if(dj_id !=event[0].dj_id):
+            return {'exist':True, 'msg': 'You are not the dj of this event, create a new one!'}
+        return {'exist':True}
+
+    return {'exist':False}
 
 @app.route('/apidj/create', methods=['POST'])
 def create_dj():
     data = request.get_json()
+    # print(data)
     result = signup(data['mail'], data['pass'])
     
     if result:
-        pass_bytes = data['pass'].encode('utf-8')
-        hashed = bcrypt.hashpw(pass_bytes, bcrypt.gensalt())
+        hashed = DJ.create_password(data['pass'])
         dj = DJ(username=data['name'], phone=data['phone'], email=data['mail'], password=hashed) 
         db.session.add(dj)
         db.session.commit()
@@ -338,17 +391,19 @@ def create_dj():
     
     return {}
 
+import bcrypt
+
 @app.route('/apidj/check', methods=['POST'])
 def confirm_dj():
 
     data = request.get_json()
     ans = login(data['mail'], data['pass'])
     if ans:
-        pass_bytes = data['pass'].encode('utf-8')
         dj = db.session.execute(select(DJ.id, DJ.password).where(DJ.email == data['mail'])).first()
+        print(dj.password)
         # print(dj.id)
     
-        return {'id':dj.id, 'exist': True, 'valid_password':bcrypt.checkpw(pass_bytes, dj.password)} if dj.id else {'exist':'the password is in firebase but not in the db'}
+        return {'id':dj.id, 'exist': True, 'valid_password':bcrypt.checkpw(data['pass'].encode('utf-8'), dj.password.encode('utf-8'))} if dj.id else {'exist':'the password is in firebase but not in the db'}
     
     return {'exist':False}
 
@@ -432,6 +487,37 @@ def listen_song():
     except requests.exceptions.HTTPError as err:
         raise SystemExit(err)
 
+@socketio.on('connect')
+def handle_connect():
+    print('Client connected')
+
+@socketio.on('req_updated')
+def handle_req_updated(message):
+    print('Request updated')
+
+@socketio.on('req_created')
+def handle_req_created(message):
+    print('Request created')
+
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print('Client disconnected')
+
+
+
+@socketio.on('join')
+def on_join(data):
+    room = data['room']
+    join_room(room)
+    print(room,"joined")
+    print(data)
+    if data['access']=='user':
+        socketio.emit('new_room', {'room_id': room})
+
+
+
+    
 
 # if __name__ == "__main__":
     # hey = listen_song('app/try.wav')

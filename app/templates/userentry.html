@@ -33,7 +33,8 @@
             if (eventId) {
                 // Save the eventId to localStorage
                 localStorage.setItem('eventId_user', eventId);
-                fetchMoviesAndCategories(eventId).then(([a, b]) => {
+                fetchUserAndDj(eventId).then(([a, b]) => {
+                    console.log([a,b]);
                     djId = a['id'];
                     userId = b['id']; 
                     localStorage.setItem('userId', userId);
@@ -49,7 +50,7 @@
             // If no event_id is present in the URL, the page remains static and does nothing
         });
 
-        async function fetchMoviesAndCategories(event_id) {
+        async function fetchUserAndDj(event_id) {
             const [djResponse, userResponse] = await Promise.all([
                 fetch("{{ url_for('get_maindj') }}", {
                     method: 'POST', // or 'POST', etc.

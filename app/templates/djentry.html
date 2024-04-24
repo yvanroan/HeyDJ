@@ -19,40 +19,82 @@
         <div class="card flex">
           <div>
             <input type="text" id="eventInput" placeholder="Event Name...">
+            <input type="number" id="eventId" >
+            <p>Enter id for existing event if you are the assigned dj, else enter only the Event name!</p>
             <!-- <input type="text" id="djInput" placeholder="Main DJ Id..."> -->
-            <button class="interactive" id="createEvent" onclick="create_event()">Create Event</button>
+            <button class="interactive" id="createEvent" onclick="get_or_create_event()">Get or Create Event</button>
           </div>
         </div>
         
     </div>
 
     <script>
-      function create_event(){
+      function get_or_create_event(){
 
         const name = document.getElementById('eventInput').value;
-        const djid = localStorage.getItem('djId_dj');  //parseInt(document.getElementById('djInput').value);
-        const data = {'name':name, 'dj':djid};
-        console.log(data);
-        const fetch_event = "{{ url_for('create_event') }}";
-        fetch(fetch_event, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(dat => {
-          localStorage.setItem('eventId_dj', dat['id']);
-          // localStorage.setItem('djId_dj', djid);
-          console.log('yeah');
+        const ev_id = document.getElementById('eventId').value;
+        const djid = localStorage.getItem('djId_dj');
 
-          window.location.href = "{{ url_for('dj') }}";
+        if(ev_id !== ''){
 
+          data={'ev_id':parseInt(ev_id), 'dj_id':parseInt(djid)};
+          console.log(data);
+
+          const fetch_event = "{{ url_for('check_event_and_dj') }}";
+          fetch(fetch_event, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
           })
-          .catch(error => console.error('Error:', error));
+          .then(response => response.json())
+          .then(dat => {
+              console.log(dat);
+              if(dat['exist']){
+                if(dat['msg']){
+                  alert(dat['msg']);
+                }
+                else{
+                  localStorage.setItem('eventId_dj', parseInt(ev_id));
+                  window.location.href = "{{ url_for('dj') }}";
+                }
+              }
+              else{
+                alert('the event id does not exist');
+              }
+
+          });
+
+          
           
         }
+        else{
+            //parseInt(document.getElementById('djInput').value);
+          const data = {'name':name, 'dj':djid};
+          console.log(data);
+          const fetch_event = "{{ url_for('create_event') }}";
+          fetch(fetch_event, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+          })
+          .then(response => response.json())
+          .then(dat => {
+            localStorage.setItem('eventId_dj', dat['id']);
+            // localStorage.setItem('djId_dj', djid);
+            console.log('yeah');
+
+            window.location.href = "{{ url_for('dj') }}";
+
+            })
+            .catch(error => console.error('Error:', error));
+            
+          }
+        }
+        
 
     </script>
   </body>
