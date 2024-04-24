@@ -4,3 +4,6 @@ to_do.txt
 
 venv/
 __pycache__/
+
+./localhost-key.pem
+./localhost.pem

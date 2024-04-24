@@ -51,7 +51,7 @@
       let req_id = []; 
       const room = 'interaction_'+localStorage.getItem('djId_user')+'_'+localStorage.getItem('userId');
 
-      const socket = io.connect('http://' + document.domain + ':' + location.port);
+      const socket = io.connect('https://' + document.domain + ':' + location.port, { transports: ["websocket"], });
 
       // console.log(socket);
     
