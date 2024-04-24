@@ -141,12 +141,13 @@
           }).then(data => {
 
 
+              const myNode = document.getElementById("actionPanel");
+              while (myNode.firstChild) {
+                myNode.removeChild(myNode.lastChild);
+              }
               if(Object.keys(data.Requests).length !== 0){
 
-                const myNode = document.getElementById("actionPanel");
-                while (myNode.firstChild) {
-                  myNode.removeChild(myNode.lastChild);
-                }
+                
 
                 req_id = data.Requests.id;
                 let requests_data = data.Requests.id.map((_, index) => {

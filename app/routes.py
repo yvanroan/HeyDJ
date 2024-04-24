@@ -344,6 +344,7 @@ def end_session():
 def create_user():    
     # Create a new Item instance
     user = App_user()
+    print(user,user.id,"ouiii")
     db.session.add(user)
     db.session.commit()
 

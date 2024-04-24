@@ -114,14 +114,15 @@
       }).then(data => {
         document.getElementById("djSession").innerHTML = data.Dj['name'];
 
-        console.log(data.Requests)
+        console.log(data.Requests);
+
+        const myNode = document.getElementById("requests");
+        while (myNode.firstChild) {
+          myNode.removeChild(myNode.lastChild);
+        }
 
         if (Object.keys(data.Requests).length !== 0) {
 
-          const myNode = document.getElementById("requests");
-          while (myNode.firstChild) {
-            myNode.removeChild(myNode.lastChild);
-          }
 
           req_id = data.Requests.id;
           req_room= data.Requests.room;

@@ -5,25 +5,16 @@
 
 from app import app
 from app.routes import socketio
-import ssl, os
+import os
     
 
 if __name__ == "__main__":
 
     if os.getenv('use_ssl', 'false') == 'true':
         # SSL context for local development
+
         # context = ('localhost.pem', 'localhost-key.pem')  # You need to install mkcert to get these.
         socketio.run(app, certfile='localhost.pem', keyfile='localhost-key.pem', debug=True)
     else:
         # No SSL in production, Heroku handles SSL termination
         socketio.run(app, debug=True)
-
-
-
-# if any change is done to the database you have to run these:
-# flask db init (if new db)
-# flask db migrate
-# flask db upgrade
-
-# if you want to go back to the previous version of the db:
-# flask db downgrade
