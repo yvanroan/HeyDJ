@@ -6,6 +6,7 @@
 from app.models import App_user, DJ, Song
 from app import db, app
 
+from app.routes import socketio
 from pathlib import Path
 
 
@@ -45,7 +46,8 @@ def seed_database():
 
 if __name__ == "__main__":
     # seed_database()
-    app.run(debug=True)
+    # app.run(debug=True)
+    socketio.run(app, debug=True)
 
 
 # if any change is done to the database you have to run these:

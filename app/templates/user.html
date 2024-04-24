@@ -9,6 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NEXT >></title>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
   </head>
 
@@ -23,13 +24,14 @@
           <h2 id = "eventId"></h2>
           <input id="songTitle" type="text" placeholder="Enter song title">
           <input id="songArtist" type="text" placeholder="Enter artist">
+          <input id="tips" type="text" placeholder="Enter your tips" disabled="disabled">
           <button class="interactive" id="submitRequest" onclick="createRequest()">Submit Request</button>
         </div>
         
         <div>
           <!-- History -->
           <div id="actionPanel" class="card highlight">
-              <h3>Your Requests</h3>
+              <!-- <h3>Your Requests</h3> -->
           </div>
         </div>
         <!-- Stack -->
@@ -44,9 +46,36 @@
 
     <script>
       
-      window.onload = fetchData_user();   
+      // window.onload = fetchData_user();   
       
-      let req_id = [];   
+      let req_id = []; 
+      const room = 'interaction_'+localStorage.getItem('djId_user')+'_'+localStorage.getItem('userId');
+
+      const socket = io.connect('http://' + document.domain + ':' + location.port);
+
+      // console.log(socket);
+    
+
+      socket.on('connect', function() {
+        console.log('Websocket connected! '+room);
+        socket.emit('join', {'room': room, 'access':'user'});
+        fetchData_user(); 
+      });
+
+      socket.on('req_updated',(data)=>{
+        console.log(data);
+        
+        fetchData_user();
+        console.log("Update received!"); 
+
+    });
+
+    socket.on('req_created',(data)=>{
+        console.log(data);
+        
+        fetchData_user();
+        console.log("creation completed!");
+    });
 
       function createRequest(){
 
@@ -60,8 +89,8 @@
 
         
 
-        var data = {'user_id':localStorage.getItem('userId'), 'song_title':song_title.value, 'song_artist':song_artist.value, 'dj_id': localStorage.getItem('djId_user'), 'event_id':localStorage.getItem('eventId_user')};
-        // console.log(data)
+        var data = {'room':room, 'user_id':parseInt(localStorage.getItem('userId')), 'song_title':song_title.value, 'song_artist':song_artist.value, 'dj_id': parseInt(localStorage.getItem('djId_user')), 'event_id':parseInt(localStorage.getItem('eventId_user'))};
+        console.log(data)
         fetch("{{ url_for('create_request') }}", {
             method: 'POST',
             headers: {
@@ -69,6 +98,11 @@
             },
             body: JSON.stringify(data)  // Convert the JavaScript object to a JSON string
         }).then(response =>{
+            let input_title = document.getElementById("songTitle");
+            let input_artist = document.getElementById("songArtist");
+
+            input_title.value='';
+            input_artist.value='';
             if (!response.ok) throw new Error('Network response was not ok');
             return response.json();
           }).then(data => {
@@ -80,7 +114,7 @@
             console.error('Error:', error);
         });
 
-        location.reload()
+        // location.reload();
 
       }
 
@@ -108,6 +142,12 @@
 
 
               if(Object.keys(data.Requests).length !== 0){
+
+                const myNode = document.getElementById("actionPanel");
+                while (myNode.firstChild) {
+                  myNode.removeChild(myNode.lastChild);
+                }
+
                 req_id = data.Requests.id;
                 let requests_data = data.Requests.id.map((_, index) => {
                                 return Object.keys(data.Requests)
@@ -163,12 +203,9 @@
 
       async function removeRequest(data_id){
 
-        // const session = document.querySelectorAll('#myList li');
-
         const id = parseInt(data_id);
-        // console.log(id);
 
-        data ={'id': id, 'cancel': false};
+        data ={'id': id, 'cancel': false, 'room':room};
         fetch("{{ url_for('update_request') }}", {
             method: 'POST',
             headers: {
@@ -181,13 +218,13 @@
           });
         
 
-        location.reload();
+        // location.reload();
         }
 
 
       function endEvent(){
         console.log('deletion of request started...')
-        send = {'req_id': req_id};
+        send = {'req_id': req_id, 'room':room};
         fetch("{{ url_for('end_session') }}", 
           {
             method: "POST",
@@ -213,7 +250,10 @@
         
         
         localStorage.removeItem('eventId_user');
-        location.reload()
+        localStorage.removeItem('djId_user');      
+        localStorage.removeItem('userId');
+
+        window.location.href = "{{ url_for('exit') }}";
       }
 
       function swiping(){

@@ -1,350 +1,402 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXT >></title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
-  </head>
 
-  <body>
-    <div class="header">
-        <h1>NEXT >> </h1>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXT >></title>
+
+  <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
+</head>
+
+<body>
+  <div class="header">
+    <h1>NEXT >> </h1>
+  </div>
+
+  <div class="container">
+    <!-- Session controls -->
+    <div class="card flex">
+      <p id="eventId"></p>
     </div>
+
+
+    <div>
+      <h2><span id="djSession"></span>'s Session</h2>
+
+
+      <div id="requests">
+        <!-- <h2>Stack</h2> -->
+      </div>
+
+    </div>
+
+    <!-- Add New Data -->
     
-    <div class="container">
-        <!-- Session controls -->
-        <div class="card flex">
-          <p id = "eventId"></p>
-        </div>
-        
+    <button class="interactive accent" type="button" onclick="endEvent()">End Event</button>
 
-        <div>
-          <h2><span id = "djSession"></span>'s  Session</h2>
+  </div>
+
+  <script>
+
+    
+
+    let title = ''
+    let artist = ''
+    let requests_data = [];
+    let req_id = [];
+    let req_room = [];
+    let rooms = [];
+    let req_song_titles = [];
+    let req_song_artists = [];
+
+
+    const socket = io.connect('http://' + document.domain + ':' + location.port, { transports: ["websocket"], });
+
+    // console.log(socket);
+
+    socket.on('connect', async function () {
+      console.log('Websocket connected!');
+      await fetchData_dj();
+      console.log(req_room,"yo");
+      if(req_room.length != 0){
+        new Set(req_room).forEach(x =>{
           
+          console.log(x);
+          socket.emit('join', {'room': x, 'access':'dj'});
+        });
+      }  
+    });
 
-          <div id="requests">
-            <h2>Stack</h2>
-          </div>
+    socket.on('req_updated',(data)=>{
+        console.log(data);
+        console.log("Update received!"); 
+        fetchData_dj();
+    });
+
+    socket.on('req_created',(data)=>{
       
-        </div>
-        
-        <!-- Add New Data -->
-        <div class="card flex-column">
-            <h2>End event</h2>
-            <button class="interactive accent" type="button" onclick = "endEvent()">End Event</button>
-        </div>
-    </div>
+      console.log("request recieved!");
+      console.log(data);
+      fetchData_dj();
+    });
 
-    <script>
-
-      window.onload = fetchData_dj();
+    socket.on('new_room', function(data) {
+      rooms.push(data['room_id']);
+      socket.emit('join', {'room': data['room_id'], 'access':'dj'});
       
-      let title = ''
-      let artist = ''
-      let requests_data = [];
-      let req_id = [];
+    });
 
-      let req_song_titles = [];
-      let req_song_artists = [];
+    socket.on('exit',(data)=>{
+      fetchData_dj();
+      console.log("User "+data['user_id']+" left the event!");
 
-      function fetchData_dj(){
-        dat= {}
-        if (localStorage.getItem('eventId_dj')) {
-          dat['id'] = localStorage.getItem('eventId_dj');
-        }else{
-          console.log("create an event first");
-          return {}
-        }
-        fetch("{{ url_for('get_data_dj') }}", {
-          method: 'POST', // or 'POST', etc.
-          headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(dat)
-        }).then(response =>{
-            if (!response.ok) throw new Error('Network response was not ok');
-            return response.json();
-          }).then(data => {
-              document.getElementById("djSession").innerHTML = data.Dj['name'];
-              
-              console.log(data.Requests)
-              
-              if(Object.keys(data.Requests).length !== 0){
-                req_id = data.Requests.id;
-                req_song_titles = data.Requests.song_name;
-                req_song_artists = data.Requests.song_artist;
-                requests_data = data.Requests.id.map((_, index) => {
-                                return Object.keys(data.Requests)
-                                .filter(key => ['song_name', 'song_artist', 'ask', 'timestamp', 'id'].includes(key))
-                                .map(key => `${key}: ${data.Requests[key][index]}`)
-                                .join(' , ');
-                              });
+    });
 
-                console.log(requests_data);
-                const session = document.getElementById('requests');
-                // console.log(session);
-
-
-                
-                requests_data.forEach(i => {
-                  let request = document.createElement('div');
-                  request.setAttribute('class','request');
-
-                  const myArray = i.split(" , ");
-                  var ans = myArray[1].split(": ")[1];
-                  
-                  var content = document.createElement('div');
-                  content.setAttribute('class','request-content');
-                  content.setAttribute('data-id', ans);
-                  content.textContent = i;
-
-                  var delete_action = document.createElement('div');
-                  delete_action.setAttribute('class','swipe-background left-action');
-                  delete_action.textContent = 'delete';
-
-                  var play_action = document.createElement('div');
-                  play_action.setAttribute('class','swipe-background right-action');
-                  play_action.textContent = 'play';
-
-                  request.appendChild(play_action);
-                  request.appendChild(content);
-                  request.appendChild(delete_action);
-                  
-                  session.appendChild(request);
-                  
-                }); 
-
-              }
-
-              let result_ev = 'Event id: ' + data.Event['id'] + ', name: ' + data.Event['name'];
-
-              document.getElementById("eventId").innerHTML = 'Event: ' + data.Event['name'] + '(id: ' + data.Event['id'] + ')';
-
-            })
-          .then(()=>swiping()).catch(error => console.error('Error fetching items:', error));
+    function fetchData_dj() {
+      dat = {}
+      if (localStorage.getItem('eventId_dj')) {
+        dat['id'] = localStorage.getItem('eventId_dj');
+      } else {
+        console.log("create an event first");
+        return {}
       }
-      
-      let mediaRecorder;
-      let audioChunks = [];
-      var isRecording = false;
+      return fetch("{{ url_for('get_data_dj') }}", {
+        method: 'POST', // or 'POST', etc.
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dat)
+      }).then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.json();
+      }).then(data => {
+        document.getElementById("djSession").innerHTML = data.Dj['name'];
+
+        console.log(data.Requests)
+
+        if (Object.keys(data.Requests).length !== 0) {
+
+          const myNode = document.getElementById("requests");
+          while (myNode.firstChild) {
+            myNode.removeChild(myNode.lastChild);
+          }
+
+          req_id = data.Requests.id;
+          req_room= data.Requests.room;
+          console.log(data.Requests.room,'ho');
+          req_song_titles = data.Requests.song_name;
+          req_song_artists = data.Requests.song_artist;
+          requests_data = data.Requests.id.map((_, index) => {
+            return Object.keys(data.Requests)
+              .filter(key => ['song_name', 'song_artist', 'ask', 'timestamp', 'id'].includes(key))
+              .map(key => `${key}: ${data.Requests[key][index]}`)
+              .join(' , ');
+          });
+
+          console.log(requests_data);
+          const session = document.getElementById('requests');
+          // console.log(session);
 
 
-      async function removeRequest(state, data_id){
 
-        // const session = document.querySelectorAll('#myList li');
+          requests_data.forEach(i => {
+            let request = document.createElement('div');
+            request.setAttribute('class', 'request');
 
-        const id = parseInt(data_id);
-        var cancel = false;
-        var song_match = false;
+            const myArray = i.split(" , ");
+            var ans = myArray[1].split(": ")[1];
+
+            var content = document.createElement('div');
+            content.setAttribute('class', 'request-content');
+            content.setAttribute('data-id', ans);
+            content.textContent = i;
+
+            var delete_action = document.createElement('div');
+            delete_action.setAttribute('class', 'swipe-background left-action');
+            delete_action.textContent = 'delete';
+
+            var play_action = document.createElement('div');
+            play_action.setAttribute('class', 'swipe-background right-action');
+            play_action.textContent = 'play';
+
+            request.appendChild(play_action);
+            request.appendChild(content);
+            request.appendChild(delete_action);
+
+            session.appendChild(request);
+
+          });
+
+        }
+
+        let result_ev = 'Event id: ' + data.Event['id'] + ', name: ' + data.Event['name'];
+
+        document.getElementById("eventId").innerHTML = 'Event: ' + data.Event['name'] + '(id: ' + data.Event['id'] + ')';
+
+      })
+        .then(() => swiping()).catch(error => console.error('Error fetching items:', error));
+    }
+
+    let mediaRecorder;
+    let audioChunks = [];
+    var isRecording = false;
+
+
+    async function removeRequest(state, data_id) {
+
+      // const session = document.querySelectorAll('#myList li');
+
+      const id = parseInt(data_id);
+      var cancel = false;
+      var song_match = false;
 
 
 
-        for (let i = 0; i < req_id.length; i++) {
-          
-          if(req_id[i]===id){
-            // console.log("in");
-            valid_id = true;
-            if(state === 1){
-              console.log("we are listening");
-              const [shazam_title, shazam_artist] = await shazam();
+      for (let i = 0; i < req_id.length; i++) {
 
-              if(areSimilarCaseInsensitive(shazam_title, req_song_titles[i]) && areSimilarCaseInsensitive(shazam_artist, req_song_artists)){
-                song_match = true;
-              }
+        if (req_id[i] === id) {
+          // console.log("in");
+          valid_id = true;
+          if (state === 1) {
+            console.log("we are listening");
+            const [shazam_title, shazam_artist] = await shazam();
 
+            if (areSimilarCaseInsensitive(shazam_title, req_song_titles[i]) && areSimilarCaseInsensitive(shazam_artist, req_song_artists)) {
+              song_match = true;
             }
-            if(state === 0){
-              console.log("you cancelled");
-              cancel = true;
-            }
 
-            if(song_match || cancel){
-              data ={'id': id, 'cancel': cancel};
-              fetch("{{ url_for('update_request') }}", {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)  // Convert the JavaScript object to a JSON string
-              })
+          }
+          if (state === 0) {
+            console.log("you cancelled");
+            cancel = true;
+          }
+
+          if (song_match || cancel) {
+            data = { 'id': id, 'cancel': cancel, 'room':req_room[i] };
+            fetch("{{ url_for('update_request') }}", {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(data)  // Convert the JavaScript object to a JSON string
+            })
               .catch((error) => {
                 console.error('Error:', error);
               });
-            }
           }
         }
-
-        location.reload();
-      }
-      
-      function areSimilarCaseInsensitive(text1, text2) {
-        const lowerText1 = String(text1).toLowerCase();
-        const lowerText2 = String(text2).toLowerCase();
-        return lowerText1.includes(lowerText2) || lowerText2.includes(lowerText1);
       }
 
-      function shazam(){
-        
-        let title = '';
-        let artist = '';
-        console.log(isRecording);
+      // location.reload();
+    }
 
-        if (isRecording) {
-          return Promise.reject(new Error("Recording is already in progress")); 
-        }
+    function areSimilarCaseInsensitive(text1, text2) {
+      const lowerText1 = String(text1).toLowerCase();
+      const lowerText2 = String(text2).toLowerCase();
+      return lowerText1.includes(lowerText2) || lowerText2.includes(lowerText1);
+    }
 
-        isRecording = true; 
+    function shazam() {
 
-        return new Promise((resolve, reject) => {
-          navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(stream => {
-                  mediaRecorder = new MediaRecorder(stream);
-                  mediaRecorder.start();
-                  audioChunks = [];
+      let title = '';
+      let artist = '';
+      console.log(isRecording);
 
-                  mediaRecorder.ondataavailable = event => {
-                      audioChunks.push(event.data);
-                  };
-
-                  setTimeout(() => {
-                      // Stop recording after 4 seconds
-                      mediaRecorder.stop();
-                  }, 4000);
-
-                  mediaRecorder.onstop = () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                    const formData = new FormData();
-                    formData.append("audio", audioBlob);
-                    
-
-
-                    fetch("{{ url_for('listen_song') }}", {
-                      method: "POST",
-                      body: formData,
-                    }).then(response => {
-
-                      if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                      }
-                      
-                      return response.json()
-                    })
-                      .then(data => {
-                        console.log(data); 
-                        title = data["title"];
-                        artist = data["artist"];
-                        resolve([title, artist]); 
-
-                      })
-                      .catch(err => {
-                        console.error(err);
-                        reject(err); 
-                      })
-                      .finally(() => {
-                          isRecording = false;
-                      });
-                  };
-            })
-            .catch(err => {
-                console.error(err);
-                isRecording = false;
-                reject(err); // Reject the promise if getting user media fails
-            });
-          });
-
+      if (isRecording) {
+        return Promise.reject(new Error("Recording is already in progress"));
       }
 
+      isRecording = true;
 
-      function endEvent(){
-        console.log('deletion of request started...')
-        send = {'req_id': req_id};
-        fetch("{{ url_for('end_session') }}", 
-          {
-            method: "POST",
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(send),
-          }).then(response => 
-              {
+      return new Promise((resolve, reject) => {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(stream => {
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.start();
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = event => {
+              audioChunks.push(event.data);
+            };
+
+            setTimeout(() => {
+              // Stop recording after 4 seconds
+              mediaRecorder.stop();
+            }, 4000);
+
+            mediaRecorder.onstop = () => {
+              const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+              const formData = new FormData();
+              formData.append("audio", audioBlob);
+
+
+
+              fetch("{{ url_for('listen_song') }}", {
+                method: "POST",
+                body: formData,
+              }).then(response => {
 
                 if (!response.ok) {
                   throw new Error('Network response was not ok');
                 }
-                      
+
                 return response.json()
-              }).then(data => 
-              {
-                console.log(data); // Handle the response data, e.g., the transcribed text
-              }).catch(err => 
-              {
-                console.error(err);
-              });
-        
-        
-        localStorage.removeItem('eventId_dj');
-        location.reload()
-      }
+              })
+                .then(data => {
+                  console.log(data);
+                  title = data["title"];
+                  artist = data["artist"];
+                  resolve([title, artist]);
+
+                })
+                .catch(err => {
+                  console.error(err);
+                  reject(err);
+                })
+                .finally(() => {
+                  isRecording = false;
+                });
+            };
+          })
+          .catch(err => {
+            console.error(err);
+            isRecording = false;
+            reject(err); // Reject the promise if getting user media fails
+          });
+      });
+
+    }
 
 
-      function swiping(){
+    function endEvent() {
+      console.log('deletion of request started...')
+      send = { 'req_id': req_id, 'room':'IamDJ'};
+      fetch("{{ url_for('end_session') }}",
+        {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(send),
+        }).then(response => {
 
-        document.querySelectorAll('.request-content').forEach(item => {
-          let startX;
-          const threshold = 150; // Minimum swipe distance for an action to occur
-          const delet = document.getElementsByClassName("swipe-background")[0];
-          const width = delet.offsetWidth;
-          // console.log(item.dataset.id);
-          // console.log(width);
-
-          item.addEventListener('mousedown', startSwipe, false);
-          item.addEventListener('touchstart', startSwipe, false);
-
-          function startSwipe(e) {
-            startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-            this.classList.add('dragging');
-            window.addEventListener('mousemove', onSwipe, false);
-            window.addEventListener('touchmove', onSwipe, false);
-            window.addEventListener('mouseup', endSwipe, false);
-            window.addEventListener('touchend', endSwipe, false);
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
           }
 
-          function onSwipe(e) {
-            const x = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-            const deltaX = x - startX;
-            if (deltaX < 0) { // Swiping left
-              item.style.transform = `translateX(${deltaX}px)`;
-            } else if (deltaX > 0) { // Swiping right
-              item.style.transform = `translateX(${deltaX}px)`;
-            }
-          }
-
-          function endSwipe(e) {
-            item.classList.remove('dragging');
-            const x = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
-            const deltaX = x - startX;
-            if (deltaX <= -width) { // Swiped left
-              removeRequest(0,item.dataset.id);
-              console.log('Delete action triggered');
-              // Add your delete logic here
-            } else if (deltaX >= width) { // Swiped right
-              removeRequest(1,item.dataset.id);
-              console.log('Play action triggered');
-              // Add your play logic here
-            }
-            item.style.transform = ''; // Reset position
-            window.removeEventListener('mousemove', onSwipe, false);
-            window.removeEventListener('touchmove', onSwipe, false);
-            window.removeEventListener('mouseup', endSwipe, false);
-            window.removeEventListener('touchend', endSwipe, false);
-          }
+          return response.json()
+        }).then(data => {
+          console.log(data); // Handle the response data, e.g., the transcribed text
+        }).catch(err => {
+          console.error(err);
         });
 
-      }
 
-    </script>
-  </body>
+      localStorage.removeItem('eventId_dj');
+      localStorage.removeItem('djId_dj');
+
+      window.location.href = "{{ url_for('start') }}";
+    }
+
+
+    function swiping() {
+
+      document.querySelectorAll('.request-content').forEach(item => {
+        let startX;
+        const threshold = 150; // Minimum swipe distance for an action to occur
+        const delet = document.getElementsByClassName("swipe-background")[0];
+        const width = delet.offsetWidth;
+        // console.log(item.dataset.id);
+        // console.log(width);
+
+        item.addEventListener('mousedown', startSwipe, false);
+        item.addEventListener('touchstart', startSwipe, false);
+
+        function startSwipe(e) {
+          startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+          this.classList.add('dragging');
+          window.addEventListener('mousemove', onSwipe, false);
+          window.addEventListener('touchmove', onSwipe, false);
+          window.addEventListener('mouseup', endSwipe, false);
+          window.addEventListener('touchend', endSwipe, false);
+        }
+
+        function onSwipe(e) {
+          const x = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+          const deltaX = x - startX;
+          if (deltaX < 0) { // Swiping left
+            item.style.transform = `translateX(${deltaX}px)`;
+          } else if (deltaX > 0) { // Swiping right
+            item.style.transform = `translateX(${deltaX}px)`;
+          }
+        }
+
+        function endSwipe(e) {
+          item.classList.remove('dragging');
+          const x = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
+          const deltaX = x - startX;
+          if (deltaX <= -width) { // Swiped left
+            removeRequest(0, item.dataset.id);
+            console.log('Delete action triggered');
+            // Add your delete logic here
+          } else if (deltaX >= width) { // Swiped right
+            removeRequest(1, item.dataset.id);
+            console.log('Play action triggered');
+            // Add your play logic here
+          }
+          item.style.transform = ''; // Reset position
+          window.removeEventListener('mousemove', onSwipe, false);
+          window.removeEventListener('touchmove', onSwipe, false);
+          window.removeEventListener('mouseup', endSwipe, false);
+          window.removeEventListener('touchend', endSwipe, false);
+        }
+      });
+
+    }
+
+  </script>
+</body>
+
 </html>

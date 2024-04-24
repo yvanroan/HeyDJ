@@ -119,7 +119,7 @@
                     const data = {'name':name.value, 'mail':email.value, 'phone': phone.value, 'pass':confirmPasswordInput.value};
                     console.log(data);
 
-                    const fetch_url = "{{ url_for('apidj/create') }}"
+                    const fetch_url = "{{ url_for('create_dj') }}"
 
                     fetch(fetch_url, {
                     method: 'POST',

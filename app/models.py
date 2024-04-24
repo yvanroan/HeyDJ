@@ -8,6 +8,7 @@ import sqlalchemy as sa
 import sqlalchemy.orm as so
 from app import db
 from dataclasses import dataclass
+import bcrypt
 
 @dataclass
 class DJ(db.Model):
@@ -37,6 +38,14 @@ class DJ(db.Model):
     # def create_profile(name, email, password, phone):this cant be done here
         #these attributes' validity should be checked on the front end
     
+    def create_password(password):
+        hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        return hashed.decode('utf-8')
+
+    def check_password(self,password):
+        return bcrypt.checkpw(password.encode('utf-8'), self.password.encode('utf-8'))
+
+
     def add_to_stack(self,request:'Request'):
         if self.cur_session_len > self.MAX_REQUEST:
             print("Max request for your queue/session has been reached. accept or deny more request to get more requests")
