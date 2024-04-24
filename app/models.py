@@ -54,7 +54,6 @@ class DJ(db.Model):
         self.cur_session_len+=1
 
         self.session.append(request)
-        # time.sleep(2)
         print("we have added the request to the session")
 
     def shazam(self, request: 'Request'):
@@ -64,7 +63,6 @@ class DJ(db.Model):
 
         print("We are shazaming, give us a sec..")
 
-        # time.sleep(2)
         print("done shazaming :)")
 
         return self.is_shazamed
@@ -74,16 +72,13 @@ class DJ(db.Model):
         song_title, song_artist = song.name, song.artist
 
         if accept:
-            # start = time.time()
             #countdown starts
             # function to check if the song was played
             # if shazam_fxn(song_detail)
             if self.shazam(request):
-                # time.sleep(2)
                 print(f"Yeah, the song {song_title} by {song_artist} has been shazamed and is being played!") #if song is played
                 self.played+=1
             else:
-                # time.sleep(2)
                 print(f"The song {song_title} by {song_artist} will stay in the session since it wasn't played") #if countdown elapsed or we couldn't find the song, which ever happen first
             
         else:
@@ -94,13 +89,11 @@ class DJ(db.Model):
                     self.session.pop(idx)
 
                 idx+=1
-            # time.sleep(2)
             print(f'The request containing {song_title} by {song_artist} has been removed from the session')
         return
     
     def end_job(self):
         self.session.clear()
-        # time.sleep(2)
         print(f"You had a great night with {self.played} request accpeted. Thank you for using the app!")
         return self.played
   
@@ -135,7 +128,6 @@ class App_user(db.Model):
         print(event_id, cur_dj)
         event = db.session.get(Event, event_id).name
 
-        # time.sleep(2)
         print(f"A request has been sent to DJ {cur_dj} with the song {song_title} by {song_artist} for {event}")
         return request
     

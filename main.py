@@ -5,8 +5,20 @@
 
 from app import app
 from app.routes import socketio
-import os
+import os, pstats, cProfile 
     
+
+# def start_socketio_app():
+#     socketio.run(app, certfile='localhost.pem', keyfile='localhost-key.pem', debug=True)
+
+# if __name__ == '__main__':
+#     # Use cProfile to profile the start_socketio_app function
+#     cProfile.run('start_socketio_app()', 'socketio_profiling_stats')
+
+#     # Optionally, you can view profiling stats in the same script
+    
+#     p = pstats.Stats('socketio_profiling_stats')
+#     p.sort_stats('cumulative').print_stats(10)
 
 if __name__ == "__main__":
 
@@ -17,4 +29,4 @@ if __name__ == "__main__":
         socketio.run(app, certfile='localhost.pem', keyfile='localhost-key.pem', debug=True)
     else:
         # No SSL in production, Heroku handles SSL termination
-        socketio.run(app, debug=True)
+        socketio.run(app, debug=False)
