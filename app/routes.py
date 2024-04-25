@@ -20,7 +20,7 @@ from flask_socketio import SocketIO, join_room,leave_room
 
 
 CORS(app, resources={r"/*": {"origins": "*"}})
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins='*')
 
 
 load_dotenv()
