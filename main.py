@@ -21,7 +21,6 @@ import os, pstats, cProfile
 #     p.sort_stats('cumulative').print_stats(10)
 
 if __name__ == "__main__":
-    socketio.start_background_task(ping_clients)
 
     if os.getenv('use_ssl', 'false') == 'true':
         # SSL context for local development

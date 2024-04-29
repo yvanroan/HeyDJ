@@ -517,15 +517,15 @@ def on_join(data):
         socketio.emit('new_room', {'room_id': room})
 
 
-@socketio.on('ping')
-def ping_clients():
-    # print('pinging')
-    while True:
-        socketio.sleep(25)  # Sleeps are managed by Flask-SocketIO
-        # print('start ping')
-        socketio.emit('ping', {'data': 'Keeping connection alive'})
+# @socketio.on('ping')
+# def ping_clients():
+#     # print('pinging')
+#     while True:
+#         socketio.sleep(25)  # Sleeps are managed by Flask-SocketIO
+#         # print('start ping')
+#         socketio.emit('ping', {'data': 'Keeping connection alive'})
 
 
-@socketio.on('pong')
-def handle_pong(payload):
-    print('Pong received:', payload)
+# @socketio.on('pong')
+# def handle_pong(payload):
+#     print('Pong received:', payload)
