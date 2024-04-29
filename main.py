@@ -4,7 +4,7 @@
 # https://stackoverflow.com/questions/23340812/python-sqlite-table-a-has-no-column-named-x
 
 from app import app
-from app.routes import socketio
+from app.routes import socketio, ping_clients
 import os, pstats, cProfile 
     
 
@@ -21,6 +21,7 @@ import os, pstats, cProfile
 #     p.sort_stats('cumulative').print_stats(10)
 
 if __name__ == "__main__":
+    socketio.start_background_task(ping_clients)
 
     if os.getenv('use_ssl', 'false') == 'true':
         # SSL context for local development

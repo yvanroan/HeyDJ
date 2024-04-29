@@ -62,6 +62,13 @@
         fetchData_user(); 
       });
 
+      // i removed this because the user starts and end the events, hence he should be the one the server is pinging
+      // not the user
+      // socket.on('ping', function(data) {
+      //   console.log('Ping received:', data);
+      //   socket.emit('pong', {'pong': data});
+      // });
+
       socket.on('req_updated',(data)=>{
         console.log(data);
         
@@ -142,12 +149,12 @@
 
 
               const myNode = document.getElementById("actionPanel");
+
               while (myNode.firstChild) {
                 myNode.removeChild(myNode.lastChild);
               }
-              if(Object.keys(data.Requests).length !== 0){
 
-                
+              if(Object.keys(data.Requests).length !== 0){
 
                 req_id = data.Requests.id;
                 let requests_data = data.Requests.id.map((_, index) => {

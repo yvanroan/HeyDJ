@@ -63,10 +63,18 @@
       if(req_room.length != 0){
         new Set(req_room).forEach(x =>{
           
-          // console.log(x);
+          console.log('rooms', x);
           socket.emit('join', {'room': x, 'access':'dj'});
         });
       }  
+
+      socket.emit('ping');
+      console.log('ping');
+    });
+
+    socket.on('ping', function(data) {
+        console.log('Ping received:', data);
+        socket.emit('pong', {'pong': data});
     });
 
     socket.on('req_updated',(data)=>{
