@@ -63,35 +63,37 @@ def get_data_user():
     
     print("ys")
     # add_song()
-    query = select(
-                Event.id.label("event_id"),
-                Event.name.label("event_name"),
-                Request.id,
-                Request.timestamp,
-                Request.dj_id,
-                Request.song_id,
-                Request.user_id
-            ).join_from(
-                Event, Request, Event.id == Request.event_id
-            ).where(
-                and_(
-                    Event.id == event_id,
-                    Request.in_stack == True,
-                    Request.user_id == user_id
-                )
-            ).order_by(Request.id.desc())
-    reqs = db.session.execute(query).all()
+    # query = select(
+    #             Event.id.label("event_id"),
+    #             Event.name.label("event_name"),
+    #             Request.id,
+    #             Request.timestamp,
+    #             Request.dj_id,
+    #             Request.song_id,
+    #             Request.user_id
+    #         ).join_from(
+    #             Event, Request, Event.id == Request.event_id
+    #         ).where(
+    #             and_(
+    #                 Event.id == event_id,
+    #                 Request.in_stack == True,
+    #                 Request.user_id == user_id
+    #             )
+    #         ).order_by(Request.id.desc())
+    event = db.session.execute(select(Event.id, Event.name, Event.dj_id).where(Event.id == event_id)).first()
+    reqs = db.session.execute(select(Request.id, Request.timestamp, Request.dj_id, Request.song_id,Request.user_id).where(Request.in_stack == True).where(Request.user_id == user_id).order_by(Request.id.desc())).all()
     
 
+
     event_obj, req_obj = {}, collections.defaultdict(list)
+
+    event_obj['id'] = event_id
+    event_obj['name'] = event.name
 
     song_ids = set()
 
     for req in reqs:
 
-        event_obj['id'] = req.event_id
-        event_obj['name'] = req.event_name
-        
         if req.song_id in song_ids:
             print(req.song_id,"get_data_user")
             continue
@@ -121,22 +123,22 @@ def get_data_dj():
     data = request.get_json()
     event_id = data['id']
 
-    sql = text(f"""
-                SELECT 
-                    event.id AS event_id, event.name AS event_name,
-                    dj.username AS dj_username, request.id, 
-                    request.timestamp, request.user_id, request.dj_id, request.song_id
-                FROM
-                    request
-                JOIN
-                    event ON event.id = request.event_id
-                JOIN
-                    dj ON request.dj_id = dj.id
-                WHERE
-                    event.id = {event_id}
-                AND
-                    request.in_stack = 1
-               """)
+    # sql = text(f"""
+    #             SELECT 
+    #                 event.id AS event_id, event.name AS event_name,
+    #                 dj.username AS dj_username, request.id, 
+    #                 request.timestamp, request.user_id, request.dj_id, request.song_id
+    #             FROM
+    #                 request
+    #             JOIN
+    #                 event ON event.id = request.event_id
+    #             JOIN
+    #                 dj ON request.dj_id = dj.id
+    #             WHERE
+    #                 event.id = {event_id}
+    #             AND
+    #                 request.in_stack = 1
+    #            """)
 
     # query = select(
     #             Event.id.label("event_id"),
@@ -158,21 +160,26 @@ def get_data_dj():
     #             ) 
             # ).order_by(Request.id.desc())
 
-    reqs = db.session.execute(sql).all()  
+    # reqs = db.session.execute(sql).all() 
+    
+     
+    event = db.session.execute(select(Event.id, Event.name, Event.dj_id).where(Event.id == event_id)).first()
+    dj = db.session.execute(select(DJ.id, DJ.username).where(DJ.id == event.dj_id)).first()
+    reqs = db.session.execute(select(Request.id, Request.timestamp,Request.user_id, Request.dj_id, Request.song_id).where(Request.in_stack == True).where(Request.event_id == event_id).order_by(Request.id.desc())).all()
+      
 
     event_obj, dj_obj, req_obj = {}, {}, collections.defaultdict(list)
 
     song_ids = set()
     event_obj['id'] = event_id
+    event_obj['name'] = event.name
+
+
+    dj_obj['id'] = dj.id
+    dj_obj['name'] = dj.username
 
     for req in reqs:
 
-        
-        event_obj['name'] = req.event_name
-
-        dj_obj['id'] = req.dj_id
-        dj_obj['name'] = req.dj_username
-        
         if req.song_id in song_ids:
             continue
         
@@ -471,10 +478,9 @@ def on_join(data):
 @socketio.on('alive')
 def ping_clients():
     # print('pinging')
-    while True:
-        socketio.sleep(25)  # Sleeps are managed by Flask-SocketIO
-        print('start ping')
-        socketio.emit('ping', {'data': 'Keeping connection alive'})
+     # Sleeps are managed by Flask-SocketIO
+    print('start ping')
+    socketio.emit('ping', {'data': 'Keeping connection alive'})
 
 
 @socketio.on('pong')
