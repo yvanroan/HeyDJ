@@ -69,14 +69,13 @@
         });
       }  
 
-      // socket.emit('ping');
-      // console.log('ping');
+      socket.emit('alive');
     });
 
-    // socket.on('ping', function(data) {
-    //     console.log('Ping received:', data);
-    //     socket.emit('pong', {'pong': data});
-    // });
+    socket.on('ping', function(data) {
+        console.log('Ping received:', data);
+        socket.emit('pong', {'pong': data});
+    });
 
     socket.on('req_updated',(data)=>{
         console.log(data);

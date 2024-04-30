@@ -9,7 +9,7 @@ from app import app, db
 from app.models import App_user, DJ, Song, Request, Event
 from flask import jsonify, request, render_template
 import collections
-from sqlalchemy import select, update, and_
+from sqlalchemy import select, update, and_, text
 import os
 import requests
 from dotenv import load_dotenv
@@ -71,8 +71,8 @@ def get_data_user():
                 Request.dj_id,
                 Request.song_id,
                 Request.user_id
-            ).join(
-                Request, Event.id == Request.event_id
+            ).join_from(
+                Event, Request, Event.id == Request.event_id
             ).where(
                 and_(
                     Event.id == event_id,
@@ -115,34 +115,50 @@ def get_data_user():
     
     return jsonify({'Requests':req_obj, 'Event':event_obj})
 
-
 @app.route('/apidj', methods=['POST'])
 def get_data_dj():
         
     data = request.get_json()
     event_id = data['id']
 
-    query = select(
-                Event.id.label("event_id"),
-                Event.name.label("event_name"),
-                DJ.username.label("dj_username"),
-                Request.id,
-                Request.timestamp,
-                Request.user_id,
-                Request.dj_id,
-                Request.song_id
-            ).join(
-                DJ, Event.dj_id == DJ.id
-            ).join(
-                Request, and_(Event.id == Request.event_id, Request.dj_id == DJ.id)
-            ).where(
-                and_(
-                    Event.id == event_id,  
-                    Request.in_stack == True 
-                ) 
-            ).order_by(Request.id.desc())
+    sql = text(f"""
+                SELECT 
+                    event.id AS event_id, event.name AS event_name,
+                    dj.username AS dj_username, request.id, 
+                    request.timestamp, request.user_id, request.dj_id, request.song_id
+                FROM
+                    request
+                JOIN
+                    event ON event.id = request.event_id
+                JOIN
+                    dj ON request.dj_id = dj.id
+                WHERE
+                    event.id = {event_id}
+                AND
+                    request.in_stack = 1
+               """)
 
-    reqs = db.session.execute(query).all()  
+    # query = select(
+    #             Event.id.label("event_id"),
+    #             Event.name.label("event_name"),
+    #             DJ.username.label("dj_username"),
+    #             Request.id,
+    #             Request.timestamp,
+    #             Request.user_id,
+    #             Request.dj_id,
+    #             Request.song_id
+    #         ).join(
+    #             DJ, Event.dj_id == DJ.id
+    #         ).join(
+    #             Request, Event.id == Request.event_id)
+    #         ).where(
+    #             and_(
+    #                 Event.id == event_id,  
+    #                 Request.in_stack == True 
+    #             ) 
+            # ).order_by(Request.id.desc())
+
+    reqs = db.session.execute(sql).all()  
 
     event_obj, dj_obj, req_obj = {}, {}, collections.defaultdict(list)
 
@@ -178,7 +194,7 @@ def get_data_dj():
         req_obj['room'].append('interaction_'+str(req.dj_id)+'_'+str(req.user_id))
         
 
-    print(event_obj)
+    print(event_obj,dj_obj,req_obj)
     return jsonify({'Dj':dj_obj, 'Requests':req_obj, 'Event':event_obj})
 
 @app.route('/api/dj', methods=['POST'])
@@ -452,16 +468,15 @@ def on_join(data):
     if data['access']=='user':
         socketio.emit('new_room', {'room_id': room})
 
+@socketio.on('alive')
+def ping_clients():
+    # print('pinging')
+    while True:
+        socketio.sleep(25)  # Sleeps are managed by Flask-SocketIO
+        print('start ping')
+        socketio.emit('ping', {'data': 'Keeping connection alive'})
 
-# @socketio.on('ping')
-# def ping_clients():
-#     # print('pinging')
-#     while True:
-#         socketio.sleep(25)  # Sleeps are managed by Flask-SocketIO
-#         # print('start ping')
-#         socketio.emit('ping', {'data': 'Keeping connection alive'})
 
-
-# @socketio.on('pong')
-# def handle_pong(payload):
-#     print('Pong received:', payload)
+@socketio.on('pong')
+def handle_pong(payload):
+    print('Pong received:', payload['pong'])
