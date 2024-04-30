@@ -71,8 +71,8 @@ def get_data_user():
                 Request.dj_id,
                 Request.song_id,
                 Request.user_id
-            ).select_from(
-                Event.join(Request, Event.id == Request.event_id)
+            ).join(
+                Request, Event.id == Request.event_id
             ).where(
                 and_(
                     Event.id == event_id,
@@ -84,10 +84,6 @@ def get_data_user():
     
 
     event_obj, req_obj = {}, collections.defaultdict(list)
-
-    
-    
-
 
     song_ids = set()
 
@@ -135,12 +131,15 @@ def get_data_dj():
                 Request.user_id,
                 Request.dj_id,
                 Request.song_id
-            ).select_from(
-                Event.join(DJ, Event.dj_id == DJ.id)  # Join Event and DJ on Event.dj_id == DJ.id
-                .outerjoin(Request, and_(Event.id == Request.event_id, Request.dj_id == DJ.id))  # Then join Request
+            ).join(
+                DJ, Event.dj_id == DJ.id
+            ).join(
+                Request, and_(Event.id == Request.event_id, Request.dj_id == DJ.id)
             ).where(
-                Event.id == event_id,  # Ensure the Event ID matches
-                Request.in_stack == True  # Only select requests that are 'in stack'
+                and_(
+                    Event.id == event_id,  
+                    Request.in_stack == True 
+                ) 
             ).order_by(Request.id.desc())
 
     reqs = db.session.execute(query).all()  
@@ -179,7 +178,7 @@ def get_data_dj():
         req_obj['room'].append('interaction_'+str(req.dj_id)+'_'+str(req.user_id))
         
 
-    # print(req_obj)
+    print(event_obj)
     return jsonify({'Dj':dj_obj, 'Requests':req_obj, 'Event':event_obj})
 
 @app.route('/api/dj', methods=['POST'])
