@@ -58,8 +58,8 @@
 
     socket.on('connect', async function () {
       console.log('Websocket connected!');
-      //  fetchData_dj();
-      // swiping();
+       fetchData_dj();
+      swiping();
       console.log(req_room,"yo");
       if(req_room.length != 0){
         new Set(req_room).forEach(x =>{

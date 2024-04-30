@@ -20,7 +20,7 @@ import bcrypt
 
 
 CORS(app, resources={r"/*": {"origins": "*"}})
-socketio = SocketIO(app, cors_allowed_origins='*')
+socketio = SocketIO(app, cors_allowed_origins='*', ping_interval=20, ping_timeout=25)
 
 load_dotenv()
 
@@ -385,7 +385,6 @@ def search_songs(title, singer):
         return {'msg':'Please double Check if the details provided are correct. If they are, this tune is not available at the moment.'}
     except requests.exceptions.HTTPError as err:
         raise SystemExit(err)
-
 
 @app.route('/apidj/upload-audio', methods=['POST'])
 def listen_song():
