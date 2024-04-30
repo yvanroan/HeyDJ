@@ -9,19 +9,18 @@ from app import app, db
 from app.models import App_user, DJ, Song, Request, Event
 from flask import jsonify, request, render_template
 import collections
-from sqlalchemy import select, update
+from sqlalchemy import select, update, and_
 import os
 import requests
 from dotenv import load_dotenv
 from app.encode_decode import sound_breathing
 from app.auth import login, signup
 from flask_socketio import SocketIO, join_room,leave_room
-
+import bcrypt
 
 
 CORS(app, resources={r"/*": {"origins": "*"}})
 socketio = SocketIO(app, cors_allowed_origins='*')
-
 
 load_dotenv()
 
@@ -42,10 +41,6 @@ def userentry():
 def user():
     return render_template('user.html')
 
-@app.route('/homelandooo')
-def homelandooo():
-    return render_template('homepage.html')
-
 @app.route('/djentry')
 def djentry():
     return render_template('djentry.html')
@@ -58,60 +53,6 @@ def dj():
 def exit():
     return render_template('exit.html')
 
-
-
-@app.route('/api', methods=['POST'])
-def get_data():
-
-    data = request.get_json()
-    event_id = data['id']
-
-    
-    print("ys")
-    # add_song()
-    event = db.session.execute(select(Event.id, Event.name, Event.dj_id).where(Event.id == event_id)).first()
-    users = db.session.execute(select(App_user.id)).all()
-    songs = db.session.execute(select(Song.id, Song.artist, Song.name)).all()
-    dj = db.session.execute(select(DJ.id, DJ.username).where(DJ.id == event.dj_id) ).first()
-    reqs = db.session.execute(select(Request.id, Request.timestamp,Request.user_id, Request.dj_id, Request.song_id).where(Request.in_stack == True).order_by(Request.id.desc())).all()
-       
-
-    event_obj, user_obj, dj_obj, song_obj, req_obj = {}, collections.defaultdict(list), {}, collections.defaultdict(list), collections.defaultdict(list)
-    
-    event_obj['id'] = event.id
-    event_obj['name'] = event.name
-
-    dj_obj['id'] = dj.id
-    dj_obj['name'] = dj.username
-
-    for user in users:
-        user_obj['id'].append(user.id)
-
-    for song in songs[:10]:
-        song_obj['id'].append(song.id)
-        song_obj['artist'].append(song.artist)
-        song_obj['title'].append(song.name)
-
-    for req in reqs:
-        if 'dj_id' in req_obj and 'song_id' in req_obj and req.song_id in req_obj['song_id'] and req.dj_id in req_obj['dj_id']:
-            continue
-        
-        ask =  len(db.session.execute(select(Request.id).where(Request.event_id == event_id).where(Request.song_id == req.song_id).where(Request.dj_id == req.dj_id).where(Request.in_stack == True)).all())
-
-        req_obj['timestamp'].append(str(req.timestamp))
-        req_obj['dj_id'].append(req.dj_id)
-        req_obj['song_id'].append(req.song_id)
-        req_obj['ask'].append(ask)
-
-        cur_song = db.session.get(Song, req.song_id)
-        song_artist, song_title = cur_song.artist, cur_song.name
-
-        req_obj['song_name'].append(song_title)
-        req_obj['song_artist'].append(song_artist)        
-        req_obj['id'].append(req.id)
-    
-    return jsonify({'Users':user_obj, 'Djs':dj_obj,'Songs':song_obj, 'Requests':req_obj, 'Event':event_obj})
-
 @app.route('/apiuser', methods=['POST'])
 def get_data_user():
         
@@ -122,41 +63,50 @@ def get_data_user():
     
     print("ys")
     # add_song()
-    event = db.session.execute(select(Event.id, Event.name, Event.dj_id).where(Event.id == event_id)).first()
-    songs = db.session.execute(select(Song.id, Song.artist, Song.name)).all()
-    dj = db.session.execute(select(DJ.id, DJ.username).where(DJ.id == event.dj_id)).first()
-    reqs = db.session.execute(select(Request.id, Request.timestamp, Request.dj_id, Request.song_id,Request.user_id).where(Request.in_stack == True).where(Request.user_id == user_id).order_by(Request.id.desc())).all()
+    query = select(
+                Event.id.label("event_id"),
+                Event.name.label("event_name"),
+                Request.id,
+                Request.timestamp,
+                Request.dj_id,
+                Request.song_id,
+                Request.user_id
+            ).select_from(
+                Event.join(Request, Event.id == Request.event_id)
+            ).where(
+                and_(
+                    Event.id == event_id,
+                    Request.in_stack == True,
+                    Request.user_id == user_id
+                )
+            ).order_by(Request.id.desc())
+    reqs = db.session.execute(query).all()
     
 
-    event_obj, dj_obj, song_obj, req_obj = {}, {}, collections.defaultdict(list), collections.defaultdict(list)
+    event_obj, req_obj = {}, collections.defaultdict(list)
+
     
-    event_obj['id'] = event.id
-    event_obj['name'] = event.name
+    
 
-    dj_obj['id'] = dj.id
-    dj_obj['name'] = dj.username
 
-    for song in songs[:10]:
-        song_obj['id'].append(song.id)
-        song_obj['artist'].append(song.artist)
-        song_obj['title'].append(song.name)
-
-    song_ids = []
+    song_ids = set()
 
     for req in reqs:
 
+        event_obj['id'] = req.event_id
+        event_obj['name'] = req.event_name
         
         if req.song_id in song_ids:
             print(req.song_id,"get_data_user")
             continue
         
-        ask =  len(db.session.execute(select(Request.id).where(Request.song_id == req.song_id).where(Request.user_id == user_id).where(Request.in_stack == True)).all())
+        ask =  len([r for r in reqs if r.song_id == req.song_id and r.user_id == user_id])
         # i removed the event_id filter above because you cant be in two event at once, so the event should be unique. you need to leave an event to join another one
         # or you'd have to get a new userid
 
         req_obj['timestamp'].append(str(req.timestamp))
         req_obj['ask'].append(ask)
-        song_ids.append(req.song_id)
+        song_ids.add(req.song_id)
 
         cur_song = db.session.get(Song, req.song_id)
         song_artist, song_title = cur_song.artist, cur_song.name
@@ -167,7 +117,7 @@ def get_data_user():
 
     print(req_obj)
     
-    return jsonify({'Djs':dj_obj,'Songs':song_obj, 'Requests':req_obj, 'Event':event_obj})
+    return jsonify({'Requests':req_obj, 'Event':event_obj})
 
 
 @app.route('/apidj', methods=['POST'])
@@ -176,33 +126,49 @@ def get_data_dj():
     data = request.get_json()
     event_id = data['id']
 
-    event = db.session.execute(select(Event.id, Event.name, Event.dj_id).where(Event.id == event_id)).first()
-    dj = db.session.execute(select(DJ.id, DJ.username).where(DJ.id == event.dj_id)).first()
-    reqs = db.session.execute(select(Request.id, Request.timestamp,Request.user_id, Request.dj_id, Request.song_id).where(Request.in_stack == True).where(Request.event_id == event_id).where(Request.dj_id == event.dj_id).order_by(Request.id.desc())).all()
-       
+    query = select(
+                Event.id.label("event_id"),
+                Event.name.label("event_name"),
+                DJ.username.label("dj_username"),
+                Request.id,
+                Request.timestamp,
+                Request.user_id,
+                Request.dj_id,
+                Request.song_id
+            ).select_from(
+                Event.join(DJ, Event.dj_id == DJ.id)  # Join Event and DJ on Event.dj_id == DJ.id
+                .outerjoin(Request, and_(Event.id == Request.event_id, Request.dj_id == DJ.id))  # Then join Request
+            ).where(
+                Event.id == event_id,  # Ensure the Event ID matches
+                Request.in_stack == True  # Only select requests that are 'in stack'
+            ).order_by(Request.id.desc())
+
+    reqs = db.session.execute(query).all()  
 
     event_obj, dj_obj, req_obj = {}, {}, collections.defaultdict(list)
-    
-    event_obj['id'] = event.id
-    event_obj['name'] = event.name
 
-    dj_obj['id'] = dj.id
-    dj_obj['name'] = dj.username
-
-    song_ids = []
+    song_ids = set()
+    event_obj['id'] = event_id
 
     for req in reqs:
+
+        
+        event_obj['name'] = req.event_name
+
+        dj_obj['id'] = req.dj_id
+        dj_obj['name'] = req.dj_username
         
         if req.song_id in song_ids:
             continue
         
-        ask =  len(db.session.execute(select(Request.id).where(Request.song_id == req.song_id).where(Request.dj_id == dj.id).where(Request.in_stack == True)).all())
+        ask =  len([r for r in reqs if r.song_id == req.song_id and r.dj_id == dj.id])
         # i removed the event_id filter above because you cant be in two event at once, so the event should be unique. you need to leave an event to join another one
         # or you'd have to get a new userid
+        #removed in_Stack=true because all the request are already in the stack
 
         req_obj['timestamp'].append(str(req.timestamp))
         req_obj['ask'].append(ask)
-        song_ids.append(req.song_id)
+        song_ids.add(req.song_id)
 
         cur_song = db.session.get(Song, req.song_id)
         song_artist, song_title = cur_song.artist, cur_song.name
@@ -215,29 +181,6 @@ def get_data_dj():
 
     # print(req_obj)
     return jsonify({'Dj':dj_obj, 'Requests':req_obj, 'Event':event_obj})
-
-def seeding():
-
-    dj=DJ(username='Jay')
-
-    u1 = App_user()
-    u2 = App_user()
-    s1 = Song(name='a', artist='rocker', genre='rock')
-    s2 = Song(name='b', artist='rocker', genre='rock')
-    s3 = Song(name='c', artist='rocker', genre='rock')
-    s4 = Song(name='d', artist='rocker', genre='rock')
-    s5 = Song(name='e', artist='rocker', genre='rock')
-
-
-    db.session.add(dj)
-    db.session.add(u1)
-    db.session.add(u2)
-    db.session.add(s1)
-    db.session.add(s2)
-    db.session.add(s3)
-    db.session.add(s4)
-    db.session.add(s5)
-    db.session.commit()
 
 @app.route('/api/dj', methods=['POST'])
 def get_maindj():
@@ -392,8 +335,6 @@ def create_dj():
     
     return {}
 
-import bcrypt
-
 @app.route('/apidj/check', methods=['POST'])
 def confirm_dj():
 
@@ -500,12 +441,9 @@ def handle_req_updated(message):
 def handle_req_created(message):
     print('Request created')
 
-
 @socketio.on('disconnect')
 def handle_disconnect():
     print('Client disconnected')
-
-
 
 @socketio.on('join')
 def on_join(data):

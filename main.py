@@ -4,8 +4,8 @@
 # https://stackoverflow.com/questions/23340812/python-sqlite-table-a-has-no-column-named-x
 
 from app import app
-from app.routes import socketio, ping_clients
-import os, pstats, cProfile 
+from app.routes import socketio
+import os
     
 
 # def start_socketio_app():

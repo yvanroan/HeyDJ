@@ -58,12 +58,13 @@
 
     socket.on('connect', async function () {
       console.log('Websocket connected!');
-      await fetchData_dj();
+      //  fetchData_dj();
+      // swiping();
       console.log(req_room,"yo");
       if(req_room.length != 0){
         new Set(req_room).forEach(x =>{
           
-          console.log('rooms', x);
+          // console.log('rooms', x);
           socket.emit('join', {'room': x, 'access':'dj'});
         });
       }  
@@ -185,7 +186,7 @@
         document.getElementById("eventId").innerHTML = 'Event: ' + data.Event['name'] + '(id: ' + data.Event['id'] + ')';
 
       })
-        .then(() => swiping()).catch(error => console.error('Error fetching items:', error));
+        .catch(error => console.error('Error fetching items:', error));
     }
 
     let mediaRecorder;
@@ -238,7 +239,6 @@
         }
       }
 
-      // location.reload();
     }
 
     function areSimilarCaseInsensitive(text1, text2) {
