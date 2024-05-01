@@ -93,12 +93,15 @@ def get_data_user():
     song_ids = set()
 
     for req in reqs:
+        ask=0
 
         if req.song_id in song_ids:
             print(req.song_id,"get_data_user")
             continue
         
-        ask =  len([r for r in reqs if r.song_id == req.song_id and r.user_id == user_id])
+        for r in reqs:
+            if r.song_id == req.song_id:
+                ask +=1
         # i removed the event_id filter above because you cant be in two event at once, so the event should be unique. you need to leave an event to join another one
         # or you'd have to get a new userid
 
