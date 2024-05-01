@@ -56,7 +56,7 @@
 
     socket.on('connect', async function () {
       console.log('Websocket connected!');
-      fetchData_dj();
+      await fetchData_dj();
       
       console.log(req_room,"yo");
       if(req_room.length != 0){
@@ -71,15 +71,15 @@
 
   
 
-    socket.on('req_updated',(data)=>{
+    socket.on('req_updated', async function(data){
         console.log("Update received!"); 
-        fetchData_dj();
+        await fetchData_dj();
     });
 
-    socket.on('req_created',(data)=>{
+    socket.on('req_created', async function(data){
       
       console.log("request recieved!");
-      fetchData_dj();
+      await fetchData_dj();
     });
 
     socket.on('new_room', function(data) {
