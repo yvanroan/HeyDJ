@@ -72,7 +72,6 @@
   
 
     socket.on('req_updated',(data)=>{
-        console.log(data);
         console.log("Update received!"); 
         fetchData_dj();
     });
@@ -80,7 +79,6 @@
     socket.on('req_created',(data)=>{
       
       console.log("request recieved!");
-      console.log(data);
       fetchData_dj();
     });
 
@@ -116,8 +114,6 @@
       }).then(data => {
         document.getElementById("djSession").innerHTML = data.Dj['name'];
 
-        console.log(data.Requests);
-
         const myNode = document.getElementById("requests");
         while (myNode.firstChild) {
           myNode.removeChild(myNode.lastChild);
@@ -128,7 +124,6 @@
 
           req_id = data.Requests.id;
           req_room= data.Requests.room;
-          console.log(data.Requests.room,'ho');
           req_song_titles = data.Requests.song_name;
           req_song_artists = data.Requests.song_artist;
           requests_data = data.Requests.id.map((_, index) => {
@@ -138,11 +133,7 @@
               .join(' , ');
           });
 
-          console.log(requests_data);
           const session = document.getElementById('requests');
-          // console.log(session);
-
-
 
           requests_data.forEach(i => {
             let request = document.createElement('div');
@@ -200,7 +191,6 @@
       for (let i = 0; i < req_id.length; i++) {
 
         if (req_id[i] === id) {
-          // console.log("in");
           valid_id = true;
           if (state === 1) {
             console.log("we are listening");
@@ -244,7 +234,6 @@
 
       let title = '';
       let artist = '';
-      console.log(isRecording);
 
       if (isRecording) {
         return Promise.reject(new Error("Recording is already in progress"));
@@ -350,8 +339,6 @@
         const threshold = 150; // Minimum swipe distance for an action to occur
         const delet = document.getElementsByClassName("swipe-background")[0];
         const width = delet.offsetWidth;
-        // console.log(item.dataset.id);
-        // console.log(width);
 
         item.addEventListener('mousedown', startSwipe, false);
         item.addEventListener('touchstart', startSwipe, false);
