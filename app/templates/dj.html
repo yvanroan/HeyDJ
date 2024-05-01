@@ -195,7 +195,6 @@
           if (state === 1) {
             console.log("we are listening");
             const [shazam_title, shazam_artist] = await shazam();
-            console.log(shazam_title, req_song_titles[i],shazam_artist, req_song_artists);
             if (areSimilarCaseInsensitive(shazam_title, req_song_titles[i]) && areSimilarCaseInsensitive(shazam_artist, req_song_artists[i])) {
               song_match = true;
             }
