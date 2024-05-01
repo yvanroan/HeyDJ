@@ -54,9 +54,6 @@
 
     const socket = io.connect('https://' + document.domain + ':' + location.port, { transports: ["websocket"], });
 
-    // console.log(socket);
-    setInterval(periodicTask, 20000);
-
     socket.on('connect', async function () {
       console.log('Websocket connected!');
       fetchData_dj();
@@ -72,13 +69,7 @@
       
     });
 
-    function periodicTask(){
-      socket.emit('alive');
-    }
-
-    socket.on('ping', function(data) {
-        socket.emit('pong', {'pong': data});
-    });
+  
 
     socket.on('req_updated',(data)=>{
         console.log(data);

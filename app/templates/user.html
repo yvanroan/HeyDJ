@@ -53,24 +53,16 @@
 
       const socket = io.connect('https://' + document.domain + ':' + location.port, { transports: ["websocket"], });
 
-      // console.log(socket);
     
 
       socket.on('connect', function() {
-        console.log('Websocket connected! '+room);
+        console.log('Websocket connected! ', room);
         socket.emit('join', {'room': room, 'access':'user'});
         fetchData_user(); 
       });
 
-      // i removed this because the user starts and end the events, hence he should be the one the server is pinging
-      // not the user
-      // socket.on('ping', function(data) {
-      //   console.log('Ping received:', data);
-      //   socket.emit('pong', {'pong': data});
-      // });
 
       socket.on('req_updated',(data)=>{
-        console.log(data);
         
         fetchData_user();
         console.log("Update received!"); 
@@ -78,7 +70,6 @@
     });
 
     socket.on('req_created',(data)=>{
-        console.log(data);
         
         fetchData_user();
         console.log("creation completed!");
@@ -97,7 +88,6 @@
         
 
         var data = {'room':room, 'user_id':parseInt(localStorage.getItem('userId')), 'song_title':song_title.value, 'song_artist':song_artist.value, 'dj_id': parseInt(localStorage.getItem('djId_user')), 'event_id':parseInt(localStorage.getItem('eventId_user'))};
-        console.log(data)
         fetch("{{ url_for('create_request') }}", {
             method: 'POST',
             headers: {
@@ -164,7 +154,6 @@
                                 .join(' , ');
                               });
 
-                console.log(requests_data);
 
                 const session = document.getElementById('actionPanel');
                 

@@ -38,7 +38,6 @@
         if(ev_id !== ''){
 
           data={'ev_id':parseInt(ev_id), 'dj_id':parseInt(djid)};
-          console.log(data);
 
           const fetch_event = "{{ url_for('check_event_and_dj') }}";
           fetch(fetch_event, {
@@ -50,7 +49,6 @@
           })
           .then(response => response.json())
           .then(dat => {
-              console.log(dat);
               if(dat['exist']){
                 if(dat['msg']){
                   alert(dat['msg']);
@@ -72,7 +70,6 @@
         else{
             //parseInt(document.getElementById('djInput').value);
           const data = {'name':name, 'dj':djid};
-          console.log(data);
           const fetch_event = "{{ url_for('create_event') }}";
           fetch(fetch_event, {
             method: 'POST',
@@ -84,8 +81,6 @@
           .then(response => response.json())
           .then(dat => {
             localStorage.setItem('eventId_dj', dat['id']);
-            // localStorage.setItem('djId_dj', djid);
-            console.log('yeah');
 
             window.location.href = "{{ url_for('dj') }}";
 

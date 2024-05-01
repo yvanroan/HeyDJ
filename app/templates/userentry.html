@@ -34,7 +34,6 @@
                 // Save the eventId to localStorage
                 localStorage.setItem('eventId_user', eventId);
                 fetchUserAndDj(eventId).then(([a, b]) => {
-                    console.log([a,b]);
                     djId = a['id'];
                     userId = b['id']; 
                     localStorage.setItem('userId', userId);

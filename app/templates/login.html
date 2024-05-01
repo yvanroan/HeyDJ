@@ -45,7 +45,6 @@
             const pass = formData.get('password');
 
             const data = {'mail':email, 'pass':pass};
-            console.log(data);
             fetch("{{ url_for('confirm_dj') }}", {
             method: 'POST',
             headers: {
@@ -55,7 +54,6 @@
             })
             .then(response => response.json())
             .then(dat => {
-                console.log(dat);
                 if(!dat['exist']){
                     alert('Your email is not in the database');
                 }
@@ -63,7 +61,6 @@
                     alert('Your password is not correct. Please verify and try again.')
                 }else{
                     localStorage.setItem('djId_dj', dat['id']);
-                    console.log('yeah');
 
                     window.location.href = "{{ url_for('djentry') }}";
                 }

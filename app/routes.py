@@ -20,7 +20,7 @@ import bcrypt
 
 
 CORS(app, resources={r"/*": {"origins": "*"}})
-socketio = SocketIO(app, cors_allowed_origins='*', ping_interval=20, ping_timeout=25)
+socketio = SocketIO(app, cors_allowed_origins='*')
 
 load_dotenv()
 
@@ -60,8 +60,6 @@ def get_data_user():
     event_id = data['id']
     user_id = data['user_id']
 
-    
-    print("ys")
     # add_song()
     # query = select(
     #             Event.id.label("event_id"),
@@ -96,7 +94,6 @@ def get_data_user():
         ask=0
 
         if req.song_id in song_ids:
-            print(req.song_id,"get_data_user")
             continue
         
         for r in reqs:
@@ -204,7 +201,7 @@ def get_data_dj():
         req_obj['room'].append('interaction_'+str(req.dj_id)+'_'+str(req.user_id))
         
 
-    print(event_obj,dj_obj,req_obj)
+    print(req_obj)
     return jsonify({'Dj':dj_obj, 'Requests':req_obj, 'Event':event_obj})
 
 @app.route('/api/dj', methods=['POST'])
@@ -223,22 +220,18 @@ def create_request():
     ans = search_songs(data['song_title'], data['song_artist'])
 
     if 'name' in ans:
-        print('in')
         songs = db.session.execute(select(Song.id).where(Song.name == ans['name']).where(Song.artist == ans['artist'])).first()
         
         user = App_user.query.get(data['user_id'])
         req =''
 
         if not songs:
-            print('ok')
             song = Song(name = ans['name'], artist = ans['artist'])
             db.session.add(song)
             db.session.commit()
             req = user.create_request(song.id, data['dj_id'], data['event_id'])
         
         else:
-            print('ok1')
-            print(songs.id,data['dj_id'], data['event_id'])
             req = user.create_request(songs.id, data['dj_id'], data['event_id'])
             
 
@@ -246,10 +239,9 @@ def create_request():
         if req !='':
             db.session.add(req)
             db.session.commit()
-            print('yessir')
 
             room = data['room']
-            print(room)
+            print('room', room)
 
             socketio.emit('req_created', {'user_id':req.user_id, 'dj_id':req.dj_id, 'event_id':req.event_id}, to=room)
 
@@ -259,7 +251,7 @@ def create_request():
             return {'msg':'api issue'}
 
     else:
-        print('nah')
+        print('the song is not available at the moment')
         return {'msg':'the song is not available at the moment'}
 
     return {'good':'We good'}
@@ -281,7 +273,7 @@ def update_request():
     room = data['room']
 
     socketio.emit('req_updated',{'user_id':req.user_id, 'dj_id':req.dj_id, 'event_id':req.event_id},to=room)
-    # print("yes")
+
     return "updated req"
 
 @app.route('/api/end', methods=['POST'])
@@ -305,14 +297,12 @@ def end_session():
         leave_room(room)
 
     print('party ended')
-    # print("yes")
     return {'done':'we ended the session'}
 
 @app.route('/api/user', methods=['POST'])
 def create_user():    
     # Create a new Item instance
     user = App_user()
-    print(user,user.id,"ouiii")
     db.session.add(user)
     db.session.commit()
 
@@ -347,7 +337,6 @@ def check_event_and_dj():
 @app.route('/apidj/create', methods=['POST'])
 def create_dj():
     data = request.get_json()
-    # print(data)
     result = signup(data['mail'], data['pass'])
     
     if result:
@@ -367,8 +356,7 @@ def confirm_dj():
     ans = login(data['mail'], data['pass'])
     if ans:
         dj = db.session.execute(select(DJ.id, DJ.password).where(DJ.email == data['mail'])).first()
-        print(dj.password)
-        # print(dj.id)
+        
     
         return {'id':dj.id, 'exist': True, 'valid_password':bcrypt.checkpw(data['pass'].encode('utf-8'), dj.password.encode('utf-8'))} if dj.id else {'exist':'the password is in firebase but not in the db'}
     
@@ -378,7 +366,6 @@ def confirm_dj():
 def search_songs(title, singer):
 
     url = os.environ.get('FM_URL') 
-    print(url)
     url+='=track.search'
     track = '&track=' + title
     artist = '&artist=' + singer
@@ -387,8 +374,6 @@ def search_songs(title, singer):
 
     link = url + track + artist + rest
 
-    print(link)
-    # return ''
 
     try:
         response = requests.get(link)
@@ -414,8 +399,6 @@ def search_songs(title, singer):
 @app.route('/apidj/upload-audio', methods=['POST'])
 def listen_song():
 
-    print('got in')
-
     file = request.files['audio']
     url = os.environ.get('RAPID_URL')
 
@@ -424,7 +407,6 @@ def listen_song():
     API_KEY= os.environ.get('RAPID_API_KEY')
     
     payload = sound_breathing(file)
-    # print(payload)
  
 
     headers = {
@@ -434,7 +416,6 @@ def listen_song():
     }
     try:
         response = requests.post(url, data=payload, headers=headers, params=querystring)
-        # print(response.json())
 
         all_dat = response.json()
         info = {}
@@ -474,18 +455,6 @@ def on_join(data):
     room = data['room']
     join_room(room)
     print(room,"joined")
-    print(data)
     if data['access']=='user':
         socketio.emit('new_room', {'room_id': room})
 
-@socketio.on('alive')
-def ping_clients():
-    # print('pinging')
-     # Sleeps are managed by Flask-SocketIO
-    print('start ping')
-    socketio.emit('ping', {'data': 'Keeping connection alive'})
-
-
-@socketio.on('pong')
-def handle_pong(payload):
-    print('Pong received:', payload['pong'])

@@ -92,19 +92,16 @@
                 let messages = [];
 
                 if (!validateEmail(email.value)) {
-                    console.log(email.value);
                     messages.push('Email is not valid.');
                     valid = false;
                 }
 
                 if (!validatePassword(confirmPasswordInput.value)) {
-                    console.log(confirmPasswordInput.value);
                     messages.push('Password must be at least 8 characters long and include uppercase letters, lowercase letters, and numbers.');
                     valid = false;
                 }
 
                 if (!validatePhone(phone.value)) {
-                    console.log(phone.value);
                     messages.push('Phone number is not valid. Format: XXX-XXX-XXXX');
                     valid = false;
                 }
@@ -117,7 +114,6 @@
                     errorMessage.style.display = 'none';
 
                     const data = {'name':name.value, 'mail':email.value, 'phone': phone.value, 'pass':confirmPasswordInput.value};
-                    console.log(data);
 
                     const fetch_url = "{{ url_for('create_dj') }}"
 
@@ -132,7 +128,6 @@
                     .then(dat => {
                         if (dat['id']){
                             localStorage.setItem('djId_dj', dat['id']);
-                            console.log('yeah');
 
                             window.location.href = "{{ url_for('djentry') }}";
                         }
