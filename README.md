@@ -1,9 +1,9 @@
 # Next>> in the Buildiiiing!!!!!!
 ## Intro
 
-Next>> (or Next77) is an app that is aimed towards people who enjoy partying from time to time (or everytime lol). 
-Next>> simply helps make the connection between the DJ and audience even more magical by allowing the DJ to have a 
-sneak peak at what his users are thinking while maintaining control throughout the event.
+Next>> app allows people attending event to submit song requests live to a DJ at their event. 
+Aloowing the DJ with the choice to accept or reject the request. Used the Shazam API to verify 
+if the music accepted get played and used the FM Radio API to verify if the song submitted by the attendees exist. 
 
 ## Flow
 
