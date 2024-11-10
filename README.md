@@ -22,7 +22,9 @@ if the music accepted get played and used the FM Radio API to verify if the song
 
 2) ### User Setup
 
-    if you reached the dj screen, you should see and id next to your event name. Just like this
+    Please do this step on a separate tab since we need a tab for the user(sending requests) and the dj(recieving requests)
+   
+    if you reached the dj screen, you should see an id next to your event name. Just like this
 ![Screenshot from 2024-04-10 01-23-07](https://github.com/yvanroan/HeyDJ/assets/42220010/4de33d46-1ca4-4d01-8083-6b2116beb712)
 
     copy the link below and replace '{id}' with the id you got on your Dj screen.
@@ -31,7 +33,7 @@ if the music accepted get played and used the FM Radio API to verify if the song
 
     To ease the user's experience, this will eventually be replaced by a qrcode
 
-3) ### User sending and cancelling requests
+4) ### User sending and cancelling requests
 
     You should have hopefully reached the user screen now.
     All you have to do is enter the correct spelling of both the artist and the title you have in mind.
