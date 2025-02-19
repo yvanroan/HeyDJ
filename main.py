@@ -13,20 +13,16 @@ load_dotenv()
 
 if __name__ == "__main__":
 
-    print("yo")
-
     if os.getenv('use_ssl', 'false') == 'true':
-        print("Using SSL")
         # SSL context for local development
-        context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         context.load_cert_chain('localhost.pem', 'localhost-key.pem')  # You need to install mkcert to get these.
         socketio.run(
             app,
             ssl_context=context, 
-            debug=True
+            debug=True,
+            use_reloader=False
         )
     else:
-        # No SSL in production, Heroku handles SSL termination
-        print("Not using SSL")
         socketio.run(app, debug=False)
 

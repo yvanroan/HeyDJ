@@ -10,13 +10,18 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
 </head>
 <body>
-    <header class="bg-white shadow">
-        <div class="container mx-auto px-6 py-4">
-          <a href="{{ url_for('home') }}" class="text-4xl font-bold text-blue-600">
-            Next&gt;&gt;
-          </a>
+  <header class="bg-white shadow">
+    <div class="container mx-auto px-6 py-4 flex flex-row items-center justify-between">
+      <div class="flex items-center">
+        <a href="{{ url_for('home') }}" class="text-4xl font-bold text-blue-600">
+          Next&gt;&gt;
+        </a>
+      </div>
+      <div class="flex items-center">
+        <a href="{{ url_for('dj_dashboard') }}" class="px-6 py-2 rounded-full bg-blue-100 hover:text-blue-600 hover:bg-blue-200 hover:shadow-lg transition-all duration-300">Dashboard</a>
         </div>
-    </header>
+    </div>
+  </header>
 
     <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-blue-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
         <div class="max-w-md w-full space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-lg shadow-lg">

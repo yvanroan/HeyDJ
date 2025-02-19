@@ -109,7 +109,7 @@ class App_user(db.Model):
     def __repr__(self):
         return '<User {}>'.format(self.id)
     
-    def create_request(self, song_id,djid, event_id):
+    def create_request(self, song_id,djid, event_id,tips):
         print("a request is being created")
         
         cur_dj = db.session.get(DJ,djid).username
@@ -121,14 +121,8 @@ class App_user(db.Model):
         if not cur_song:
             print("can't find that song in the db")
 
-        request = Request(in_stack=True, dj_id= djid,song_id=song_id, user_id=self.id, event_id= event_id, cancelled=False)
-        cur_dj = db.session.get(DJ,djid).username
-        cur_song = db.session.get(Song, song_id)
-        song_artist, song_title = cur_song.artist, cur_song.name
-        print(event_id, cur_dj)
-        event = db.session.get(Event, event_id).name
-
-        print(f"A request has been sent to DJ {cur_dj} with the song {song_title} by {song_artist} for {event}")
+        request = Request(in_stack=True, dj_id= djid,song_id=song_id, user_id=self.id, event_id= event_id, cancelled=False, tips=tips)
+        
         return request
     
 @dataclass
@@ -164,6 +158,7 @@ class Request(db.Model):
     song_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Song.id), index=True)
     event_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Event.id), index=True)
     cancelled: so.Mapped[bool] = so.mapped_column(sa.Boolean)
+    tips: so.Mapped[float] = so.mapped_column(sa.Float)
     app_user: so.Mapped[App_user] = so.relationship(back_populates='outgoing_request')
     song: so.Mapped[Song] = so.relationship(back_populates='ongoing_request')
     dj: so.Mapped[DJ] = so.relationship(back_populates='incoming_request')

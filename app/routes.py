@@ -5,22 +5,22 @@
 #i had to copy the flask_cors folder from github to be able to use it here.
 
 from flask_cors import CORS
-from app import app, db
+from app import app, db, socketio
 from app.models import App_user, DJ, Song, Request, Event
 from flask import jsonify, request, render_template
 import collections
-from sqlalchemy import select, update
+from sqlalchemy import select, update, func, extract, text
 import os
 import requests
 from dotenv import load_dotenv
 from app.encode_decode import sound_breathing
 from app.auth import login, signup
-from flask_socketio import SocketIO, join_room,leave_room
+from flask_socketio import join_room,leave_room
 import bcrypt
+from datetime import datetime
 
 
 CORS(app, resources={r"/*": {"origins": "*"}})
-socketio = SocketIO(app, cors_allowed_origins='*')
 
 load_dotenv()
 
@@ -62,26 +62,8 @@ def get_data_user():
     event_id = data['id']
     user_id = data['user_id']
 
-    # add_song()
-    # query = select(
-    #             Event.id.label("event_id"),
-    #             Event.name.label("event_name"),
-    #             Request.id,
-    #             Request.timestamp,
-    #             Request.dj_id,
-    #             Request.song_id,
-    #             Request.user_id
-    #         ).join_from(
-    #             Event, Request, Event.id == Request.event_id
-    #         ).where(
-    #             and_(
-    #                 Event.id == event_id,
-    #                 Request.in_stack == True,
-    #                 Request.user_id == user_id
-    #             )
-    #         ).order_by(Request.id.desc())
     event = db.session.execute(select(Event.id, Event.name, Event.dj_id).where(Event.id == event_id)).first()
-    reqs = db.session.execute(select(Request.id, Request.timestamp, Request.dj_id, Request.song_id,Request.user_id).where(Request.in_stack == True).where(Request.user_id == user_id).order_by(Request.id.desc())).all()
+    reqs = db.session.execute(select(Request.id, Request.timestamp, Request.dj_id, Request.song_id,Request.user_id, Request.tips).where(Request.in_stack == True).where(Request.user_id == user_id).order_by(Request.id.desc())).all()
     
 
 
@@ -114,7 +96,8 @@ def get_data_user():
         req_obj['song_name'].append(song_title)
         req_obj['song_artist'].append(song_artist)        
         req_obj['id'].append(req.id)
-
+        req_obj['tips'].append(req.tips)
+        
     print(req_obj)
     
     return jsonify({'Requests':req_obj, 'Event':event_obj})
@@ -124,50 +107,11 @@ def get_data_dj():
         
     data = request.get_json()
     event_id = data['id']
-
-    # sql = text(f"""
-    #             SELECT 
-    #                 event.id AS event_id, event.name AS event_name,
-    #                 dj.username AS dj_username, request.id, 
-    #                 request.timestamp, request.user_id, request.dj_id, request.song_id
-    #             FROM
-    #                 request
-    #             JOIN
-    #                 event ON event.id = request.event_id
-    #             JOIN
-    #                 dj ON request.dj_id = dj.id
-    #             WHERE
-    #                 event.id = {event_id}
-    #             AND
-    #                 request.in_stack = 1
-    #            """)
-
-    # query = select(
-    #             Event.id.label("event_id"),
-    #             Event.name.label("event_name"),
-    #             DJ.username.label("dj_username"),
-    #             Request.id,
-    #             Request.timestamp,
-    #             Request.user_id,
-    #             Request.dj_id,
-    #             Request.song_id
-    #         ).join(
-    #             DJ, Event.dj_id == DJ.id
-    #         ).join(
-    #             Request, Event.id == Request.event_id)
-    #         ).where(
-    #             and_(
-    #                 Event.id == event_id,  
-    #                 Request.in_stack == True 
-    #             ) 
-            # ).order_by(Request.id.desc())
-
-    # reqs = db.session.execute(sql).all() 
     
      
     event = db.session.execute(select(Event.id, Event.name, Event.dj_id).where(Event.id == event_id)).first()
     dj = db.session.execute(select(DJ.id, DJ.username).where(DJ.id == event.dj_id)).first()
-    reqs = db.session.execute(select(Request.id, Request.timestamp,Request.user_id, Request.dj_id, Request.song_id).where(Request.in_stack == True).where(Request.event_id == event_id).order_by(Request.id.desc())).all()
+    reqs = db.session.execute(select(Request.id, Request.timestamp,Request.user_id, Request.dj_id, Request.song_id, Request.event_id, Request.tips).where(Request.in_stack == True).where(Request.event_id == event_id).order_by(Request.id.desc())).all()
       
 
     event_obj, dj_obj, req_obj = {}, {}, collections.defaultdict(list)
@@ -201,6 +145,7 @@ def get_data_dj():
         req_obj['song_name'].append(song_title)
         req_obj['song_artist'].append(song_artist)        
         req_obj['id'].append(req.id)
+        req_obj['tips'].append(req.tips)
         if req.user_id not in user_ids:
             req_obj['room'].append('interaction_'+str(req.dj_id)+'_'+str(req.user_id)+'_'+str(req.event_id))
             user_ids.add(req.user_id)
@@ -225,19 +170,19 @@ def create_request():
     ans = search_songs(data['song_title'], data['song_artist'])
 
     if 'name' in ans:
-        songs = db.session.execute(select(Song.id).where(Song.name == ans['name']).where(Song.artist == ans['artist'])).first()
+        song = db.session.execute(select(Song.id).where(Song.name == ans['name']).where(Song.artist == ans['artist'])).first()
         
         user = App_user.query.get(data['user_id'])
         req =''
 
-        if not songs:
-            song = Song(name = ans['name'], artist = ans['artist'])
-            db.session.add(song)
+        if not song:
+            new_song = Song(name = ans['name'], artist = ans['artist'])
+            db.session.add(new_song)
             db.session.commit()
-            req = user.create_request(song.id, data['dj_id'], data['event_id'])
+            req = user.create_request(new_song.id, data['dj_id'], data['event_id'], data['tips'])
         
         else:
-            req = user.create_request(songs.id, data['dj_id'], data['event_id'])
+            req = user.create_request(song.id, data['dj_id'], data['event_id'], data['tips'])
             
 
 
@@ -248,7 +193,7 @@ def create_request():
             room = data['room']
             print('room', room)
 
-            socketio.emit('req_created', {'user_id':req.user_id, 'dj_id':req.dj_id, 'event_id':req.event_id}, to=room)
+            socketio.emit('req_created', {'user_id':req.user_id, 'dj_id':req.dj_id, 'event_id':req.event_id, 'tips': req.tips}, to=room)
 
             
         else:
@@ -265,13 +210,23 @@ def create_request():
 def update_request():
     data = request.get_json()
 
+    ref_request = db.session.execute(
+        select(Request.song_id, Request.event_id, Request.dj_id)
+        .where(Request.id == data['id'])
+    ).first()
 
-    
-    db.session.execute(update(Request).where(Request.id == data['id']).values(in_stack= False))
+    db.session.execute(
+        update(Request)
+        .where(Request.song_id == ref_request.song_id)
+        .where(Request.event_id == ref_request.event_id)
+        .where(Request.dj_id == ref_request.dj_id)
+        .where(Request.in_stack == True)  # Only update active requests
+        .values(
+            in_stack=False,
+            cancelled=data['cancel']
+        )
+    )
     req = db.session.execute(select(Request.dj_id, Request.user_id,Request.event_id).where(Request.id == data['id'])).first()
-    print('updated')
-    if (data['cancel']):
-        db.session.execute(update(Request).where(Request.id == data['id']).values(cancelled = True))
 
     db.session.commit()
 
@@ -471,3 +426,70 @@ def on_join(data):
     print(room,"joined")
     if data['access']=='user':
         socketio.emit('new_room', {'room_id': room})
+
+@app.route('/dj/dashboard')
+def dj_dashboard():
+    return render_template('djdashboard.html')
+
+
+@app.route('/api/dj/stats/<dj_id>', methods=['GET'])
+def get_dj_stats(dj_id):
+    # Get current month stats
+    current_month = datetime.now().month
+    current_year = datetime.now().year
+    
+    # Top played songs
+    top_played = db.session.execute(
+        select(Song.name, Song.artist, func.count(Request.id).label('play_count'))
+        .join(Request, Song.id == Request.song_id)
+        .where(Request.dj_id == dj_id)
+        .where(Request.in_stack == False)
+        .where(Request.cancelled == False)
+        .group_by(Song.id)
+        .order_by(text('play_count DESC'))
+        .limit(5)
+    ).all()
+
+    # Top cancelled songs
+    top_cancelled = db.session.execute(
+        select(Song.name, Song.artist, func.count(Request.id).label('cancel_count'))
+        .join(Request, Song.id == Request.song_id)
+        .where(Request.dj_id == dj_id)
+        .where(Request.cancelled == True)
+        .group_by(Song.id)
+        .order_by(text('cancel_count DESC'))
+        .limit(5)
+    ).all()
+
+    # Tips stats
+    current_month_tips = db.session.execute(
+        select(func.sum(Request.tips))
+        .where(Request.dj_id == dj_id)
+        .where(extract('month', Request.timestamp) == current_month)
+        .where(extract('year', Request.timestamp) == current_year)
+    ).scalar() or 0
+
+    total_tips = db.session.execute(
+        select(func.sum(Request.tips))
+        .where(Request.dj_id == dj_id)
+    ).scalar() or 0
+
+    dj_details = db.session.execute(select(DJ.username).where(DJ.id == dj_id)).first()
+
+    return jsonify({
+        'dj_details': {
+            'name': dj_details.username
+        },
+        'top_played': [
+            {'title': song.name, 'artist': song.artist, 'count': song.play_count}
+            for song in top_played
+        ],
+        'top_cancelled': [
+            {'title': song.name, 'artist': song.artist, 'count': song.cancel_count}
+            for song in top_cancelled
+        ],
+        'tips': {
+            'current_month': float(current_month_tips),
+            'all_time': float(total_tips)
+        }
+    })

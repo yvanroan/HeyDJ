@@ -8,40 +8,85 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXT >></title>
+    <title>NEXT&gt;&gt; Request Zone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
-  </head>
+</head>
 
-  <body>
-    <div class="header">
-        <h1>NEXT >></h1>
-    </div>
-    
-    <div class="container">
-        <!-- Session controls -->
-        <div class="card flex">
-          <h2 id = "eventId"></h2>
-          <input id="songTitle" type="text" placeholder="Enter song title">
-          <input id="songArtist" type="text" placeholder="Enter artist">
-          <input id="tips" type="text" placeholder="Enter your tips" disabled="disabled">
-          <button class="interactive" id="submitRequest" onclick="createRequest()">Submit Request</button>
+<body class="bg-gradient-to-br from-green-50 via-blue-50 to-violet-50">
+    <header class="bg-white shadow">
+        <div class="container mx-auto px-6 py-4">
+            <a href="{{ url_for('home') }}" class="text-4xl font-bold text-blue-600">
+                Next&gt;&gt;
+            </a>
         </div>
-        
-        <div>
-          <!-- History -->
-          <div id="actionPanel" class="card highlight">
-              <!-- <h3>Your Requests</h3> -->
-          </div>
-        </div>
-        <!-- Stack -->
-        
-        
-        <!-- Add New Data -->
+    </header>
 
-        
-        <button class="interactive accent" type="button" onclick = "endEvent()">End Event</button>
-        
+    <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto space-y-8">
+            <!-- Event Info Card -->
+            <div class="bg-white/80 backdrop-blur-sm p-6 rounded-lg shadow-lg">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 id="eventId" class="text-2xl font-bold text-gray-900"></h2>
+                        <p class="text-sm text-gray-500 mt-1">🎵 Drop Your Beat! 🎵</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Request Form Card -->
+            <div class="bg-white/80 backdrop-blur-sm p-6 rounded-lg shadow-lg">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">🎧 Drop Your Request! 🎧</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="songTitle" class="block text-sm font-medium text-gray-700">What's That Track? 🎵</label>
+                        <input type="text" 
+                               id="songTitle" 
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-violet-500 focus:border-violet-500"
+                               placeholder="Drop that track name here!">
+                    </div>
+                    
+                    <div>
+                        <label for="songArtist" class="block text-sm font-medium text-gray-700">Who Made It? 🎤</label>
+                        <input type="text" 
+                               id="songArtist" 
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-violet-500 focus:border-violet-500"
+                               placeholder="Artist name goes here!">
+                               <p class="mt-2 text-sm text-violet-600 italic">
+                                ✨ Pro tip: Double-check your spelling! The DJ will verify song details, so accurate names = faster plays! ✨
+                            </p>
+                    </div>
+
+                    <div>
+                        <label for="tips" class="block text-sm font-medium text-gray-700">Show Some Love! 💖</label>
+                        <input type="text" 
+                               id="tips" 
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-violet-500 focus:border-violet-500"
+                               placeholder="Drop a tip for your DJ!">
+                    </div>
+
+                    <button onclick="createRequest()" 
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-all duration-200">
+                            NEXT&gt;&gt;
+                    </button>
+                </div>
+            </div>
+
+            <!-- History Card -->
+            <div class="bg-white/80 backdrop-blur-sm p-6 rounded-lg shadow-lg">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">🎶 Your Vibe History 🎶</h3>
+                <div id="actionPanel" class="space-y-4">
+                    <!-- Request history will be dynamically added here -->
+                </div>
+            </div>
+
+            <!-- End Event Button -->
+            <button onclick="endEvent()" 
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200">
+                Peace Out! ✌️
+            </button>
+        </div>
     </div>
 
     <script> 
@@ -77,7 +122,7 @@
       });
 
       function createRequest(){
-
+        const tips = document.getElementById('tips');
         const song_artist = document.getElementById('songArtist');
         const song_title = document.getElementById('songTitle');
 
@@ -86,107 +131,132 @@
           return {};
         }
 
+        var data = {'room':room, 'user_id':parseInt(localStorage.getItem('userId')), 'song_title':song_title.value, 'song_artist':song_artist.value, 'dj_id': parseInt(localStorage.getItem('djId_user')), 'event_id':parseInt(localStorage.getItem('eventId_user')), 'tips': tips.value};
         
-
-        var data = {'room':room, 'user_id':parseInt(localStorage.getItem('userId')), 'song_title':song_title.value, 'song_artist':song_artist.value, 'dj_id': parseInt(localStorage.getItem('djId_user')), 'event_id':parseInt(localStorage.getItem('eventId_user'))};
         fetch("{{ url_for('create_request') }}", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(data)  // Convert the JavaScript object to a JSON string
+            body: JSON.stringify(data)
         }).then(response =>{
-            let input_title = document.getElementById("songTitle");
-            let input_artist = document.getElementById("songArtist");
-
-            input_title.value='';
-            input_artist.value='';
             if (!response.ok) throw new Error('Network response was not ok');
+            // Clear ALL input fields after successful submission
+            song_title.value = '';
+            song_artist.value = '';
+            tips.value = '';  // Make sure tips is cleared
             return response.json();
-          }).then(data => {
+        }).then(data => {
             if ('msg' in data){
-              console.error('Error:', data['msg']);
+                console.error('Error:', data['msg']);
             }
-          })
-        .catch((error) => {
+        }).catch((error) => {
             console.error('Error:', error);
         });
-
-        // location.reload();
-
       }
 
       function fetchData_user(){
-        dat= {}
+        const dat = {};
         if (localStorage.getItem('eventId_user') && localStorage.getItem('userId')) {
-          dat['id'] = localStorage.getItem('eventId_user');
-          dat['user_id'] = localStorage.getItem('userId');
-        }else{
-          console.log("How did you get here? you got no event id or userid");
-          return {}
+            dat['id'] = localStorage.getItem('eventId_user');
+            dat['user_id'] = localStorage.getItem('userId');
+        } else {
+            console.log("How did you get here? you got no event id or userid");
+            return {};
         }
-        fetch("{{ url_for('get_data_user') }}" , {
-          method: 'POST', // or 'POST', etc.
-          headers: {
+        
+        fetch("{{ url_for('get_data_user') }}", {
+            method: 'POST',
+            headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(dat)
-        }).then(response =>{
+        }).then(response => {
             if (!response.ok) throw new Error('Network response was not ok');
             return response.json();
-          }).then(data => {
-
-
-              const myNode = document.getElementById("actionPanel");
-
-              while (myNode.firstChild) {
+        }).then(data => {
+            const myNode = document.getElementById("actionPanel");
+            while (myNode.firstChild) {
                 myNode.removeChild(myNode.lastChild);
-              }
+            }
 
-              if(Object.keys(data.Requests).length !== 0){
-
+            if(Object.keys(data.Requests).length !== 0){
                 req_id = data.Requests.id;
                 let requests_data = data.Requests.id.map((_, index) => {
-                                return Object.keys(data.Requests)
-                                .filter(key => ['song_name', 'song_artist', 'ask', 'timestamp'].includes(key))
-                                .map(key => `${key}: ${data.Requests[key][index]}`)
-                                .join(' , ');
-                              });
-
+                    return Object.keys(data.Requests)
+                    .filter(key => ['song_name', 'song_artist', 'ask', 'timestamp', 'tips'].includes(key))
+                    .map(key => `${key}: ${data.Requests[key][index]}`)
+                    .join(' , ');
+                });
 
                 const session = document.getElementById('actionPanel');
                 
                 requests_data.forEach((i, idx) => {
-                  let request = document.createElement('div');
-                  request.setAttribute('class','request');
-                  
-                  var content = document.createElement('div');
-                  content.setAttribute('class','request-content');
-                  content.setAttribute('data-id', req_id[idx]);
-                  content.textContent = i;
+                    const parts = i.split(" , ");
+                    const asks = parts[0].split(": ")[1];
+                    const artist = parts[1].split(": ")[1];
+                    const songName = parts[2].split(": ")[1];
+                    const timestamp = parts[3].split(": ")[1].split(".")[0];
+                    const tips = parts[4].split(": ")[1];
 
-                  var delete_action = document.createElement('div');
-                  delete_action.setAttribute('class','swipe-background left-action');
-                  delete_action.textContent = 'delete';
+                    // Check if request with same song and artist exists
+                    const existingRequest = document.querySelector(
+                        `.request-content[data-song="${songName}"][data-artist="${artist}"]`
+                    );
 
-                  var play_action = document.createElement('div');
-                  play_action.setAttribute('class','swipe-background right-action');
-                  play_action.textContent = 'play';
+                    if (existingRequest) {
+                        // Update timestamp of existing request
+                        const timeSpan = existingRequest.querySelector('.timestamp');
+                        timeSpan.textContent = timestamp;
+                        
+                        // Update tips by adding to existing amount
+                        const tipsSpan = existingRequest.querySelector('.tips');
+                        const currentTips = parseFloat(tipsSpan.getAttribute('data-tips') || 0);
+                        const newTips = currentTips + parseFloat(tips || 0);
+                        tipsSpan.textContent = `$${newTips.toFixed(2)}`;
+                        tipsSpan.setAttribute('data-tips', newTips);
+                    } else {
+                        let request = document.createElement('div');
+                        request.setAttribute('class', 'request');
+                        
+                        var content = document.createElement('div');
+                        content.setAttribute('class', 'request-content');
+                        content.setAttribute('data-id', req_id[idx]);
+                        content.setAttribute('data-song', songName);
+                        content.setAttribute('data-artist', artist);
+                        content.setAttribute('style', 'display: flex; justify-content: space-between; align-items: center;');
+                        
+                        const leftContent = document.createElement('span');
+                        leftContent.innerHTML = `
+                            <span style="font-weight: 600; color: #4F46E5;">${songName}</span>
+                            <span style="color: #6B7280;"> • </span>
+                            <span style="color: #4B5563;">${artist}</span>
+                            <span style="color: #6B7280; font-size: 0.9em;"> (${asks} 🎵)</span>
+                            <span class="tips" data-tips="${tips || 0}" style="color: #22C55E; margin-left: 8px;">$${(parseFloat(tips) || 0).toFixed(2)}</span>
+                        `;
+                        
+                        const rightContent = document.createElement('span');
+                        rightContent.setAttribute('style', 'color: #9CA3AF; font-size: 0.9em;');
+                        rightContent.classList.add('timestamp');
+                        rightContent.textContent = timestamp;
+                        
+                        content.appendChild(leftContent);
+                        content.appendChild(rightContent);
 
-                  request.appendChild(play_action);
-                  request.appendChild(content);
-                  request.appendChild(delete_action);
-                  
-                  session.appendChild(request);
-                  
+                        var delete_action = document.createElement('div');
+                        delete_action.setAttribute('class', 'swipe-background left-action');
+                        delete_action.textContent = 'delete';
+
+                        request.appendChild(content);
+                        request.appendChild(delete_action);
+                        
+                        session.appendChild(request);
+                    }
                 }); 
-              }
-              
-              document.getElementById("eventId").innerHTML = 'Event: ' + data.Event['name'] + '(id: ' + data.Event['id'] + ')';
-
-            })
-            .then(()=> swiping())
-          .catch(error => console.error('Error fetching items:', error));
+            }
+            
+            document.getElementById("eventId").innerHTML = 'Event: ' + data.Event['name'] + '(id: ' + data.Event['id'] + ')';
+        }).catch(error => console.error('Error fetching items:', error));
       }
 
       function logAction(action) {

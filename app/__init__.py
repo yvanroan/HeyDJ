@@ -3,7 +3,7 @@ from config import Config
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from sqlalchemy import MetaData
-
+from flask_socketio import SocketIO
 convention = {
     "ix": 'ix_%(column_0_label)s',
     "uq": "uq_%(table_name)s_%(column_0_name)s",
@@ -17,6 +17,7 @@ db = SQLAlchemy(metadata=metadata)
 migrate = Migrate()
 app = Flask(__name__)
 app.config.from_object(Config)
+socketio = SocketIO(app, cors_allowed_origins='*')
 db.init_app(app)
 migrate.init_app(app, db)
 

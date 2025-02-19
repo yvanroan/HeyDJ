@@ -11,8 +11,11 @@ class Config(object):
     
     DATABASE_URL = os.environ.get('HEROKU_POSTGRESQL_GRAY_URL', f'sqlite:///{os.path.join(basedir, "app.db")}')
     
+
+    # DATABASE_URL=f'sqlite:///{os.path.join(basedir, "app.db")}'
+    
     if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
             
-    # print(DATABASE_URL)
+    print(DATABASE_URL)
     SQLALCHEMY_DATABASE_URI = DATABASE_URL
