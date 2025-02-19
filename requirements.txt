@@ -15,6 +15,6 @@ pydub==0.25.1
 Pyrebase4==4.7.1
 python-dotenv==0.19.2
 psycopg2-binary==2.9.9
-Flask-SocketIO
-eventlet
+flask-socketio>=5.0.0
+eventlet>=0.30.2
 gevent

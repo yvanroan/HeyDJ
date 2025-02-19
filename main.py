@@ -5,28 +5,28 @@
 
 from app import app
 from app.routes import socketio
+from dotenv import load_dotenv
 import os
-    
+import ssl
 
-# def start_socketio_app():
-#     socketio.run(app, certfile='localhost.pem', keyfile='localhost-key.pem', debug=True)
-
-# if __name__ == '__main__':
-#     # Use cProfile to profile the start_socketio_app function
-#     cProfile.run('start_socketio_app()', 'socketio_profiling_stats')
-
-#     # Optionally, you can view profiling stats in the same script
-    
-#     p = pstats.Stats('socketio_profiling_stats')
-#     p.sort_stats('cumulative').print_stats(10)
+load_dotenv()
 
 if __name__ == "__main__":
 
-    if os.getenv('use_ssl', 'false') == 'true':
-        # SSL context for local development
+    print("yo")
 
-        # context = ('localhost.pem', 'localhost-key.pem')  # You need to install mkcert to get these.
-        socketio.run(app, certfile='localhost.pem', keyfile='localhost-key.pem', debug=True)
+    if os.getenv('use_ssl', 'false') == 'true':
+        print("Using SSL")
+        # SSL context for local development
+        context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+        context.load_cert_chain('localhost.pem', 'localhost-key.pem')  # You need to install mkcert to get these.
+        socketio.run(
+            app,
+            ssl_context=context, 
+            debug=True
+        )
     else:
         # No SSL in production, Heroku handles SSL termination
+        print("Not using SSL")
         socketio.run(app, debug=False)
+

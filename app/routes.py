@@ -9,7 +9,7 @@ from app import app, db
 from app.models import App_user, DJ, Song, Request, Event
 from flask import jsonify, request, render_template
 import collections
-from sqlalchemy import select, update, and_, text
+from sqlalchemy import select, update
 import os
 import requests
 from dotenv import load_dotenv
@@ -25,8 +25,10 @@ socketio = SocketIO(app, cors_allowed_origins='*')
 load_dotenv()
 
 @app.route('/')
+def home():
+    return render_template('home.html')
 @app.route('/login')
-def start():
+def login_page():
     return render_template('login.html')
 
 @app.route('/register')
@@ -171,6 +173,7 @@ def get_data_dj():
     event_obj, dj_obj, req_obj = {}, {}, collections.defaultdict(list)
 
     song_ids = set()
+    user_ids = set()
     event_obj['id'] = event_id
     event_obj['name'] = event.name
 
@@ -198,7 +201,9 @@ def get_data_dj():
         req_obj['song_name'].append(song_title)
         req_obj['song_artist'].append(song_artist)        
         req_obj['id'].append(req.id)
-        req_obj['room'].append('interaction_'+str(req.dj_id)+'_'+str(req.user_id))
+        if req.user_id not in user_ids:
+            req_obj['room'].append('interaction_'+str(req.dj_id)+'_'+str(req.user_id)+'_'+str(req.event_id))
+            user_ids.add(req.user_id)
         
 
     print(req_obj)
@@ -279,7 +284,8 @@ def update_request():
 @app.route('/api/end', methods=['POST'])
 def end_session():
     data = request.get_json()
-    room = data['room']
+    rooms = data['room']
+    access= data['access']
     req=''
 
     for req_id in data['req_id']:
@@ -291,10 +297,17 @@ def end_session():
     db.session.commit()
     
 
-    if room !='IamDJ':
+    if access !='IamDJ':
         req = Request.query(data['req_id'][0])
-        socketio.emit('exit',{'user_id':req.user_id},room=room)
-        leave_room(room)
+        socketio.emit('exit',{'user_id':req.user_id},room=rooms)
+        leave_room(rooms)
+
+    else:
+        for room in set(rooms):
+            socketio.emit('exit_user',room=room)
+            leave_room(room)
+    
+
 
     print('party ended')
     return {'done':'we ended the session'}
@@ -354,6 +367,7 @@ def confirm_dj():
 
     data = request.get_json()
     ans = login(data['mail'], data['pass'])
+    print('ans', ans)
     if ans:
         dj = db.session.execute(select(DJ.id, DJ.password).where(DJ.email == data['mail'])).first()
         
@@ -457,4 +471,3 @@ def on_join(data):
     print(room,"joined")
     if data['access']=='user':
         socketio.emit('new_room', {'room_id': room})
-
