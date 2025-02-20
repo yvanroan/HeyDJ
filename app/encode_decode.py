@@ -10,7 +10,7 @@ def sound_breathing(file):
     filename = os.path.join(access, file.filename)
     file.save(filename)
     sound = AudioSegment.from_file(filename)
-    print('yessa')
+    
     # Convert to the desired format: 44100Hz, Mono, 16-bit PCM
     sound = sound.set_frame_rate(44100).set_channels(1).set_sample_width(2)
 
