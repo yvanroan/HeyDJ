@@ -3,22 +3,35 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXT >></title>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
+    <title>NEXT&gt;&gt; Thank You!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
   </head>
 
-  <body>
-    <div class="header">
-        <h1>NEXT >></h1>
-    </div>
-    
-    <div class="container">
-        <!-- Session controls -->
-        <div class="card flex">
-          <h2 > Thank You For Attending The Event, See You Later!</h2>
+  <body class="bg-gradient-to-br from-violet-50 via-blue-50 to-indigo-50 min-h-screen">
+    <header class="bg-white shadow">
+        <div class="container mx-auto px-6 py-4">
+            <a href="{{ url_for('home') }}" class="text-4xl font-bold text-blue-600">
+                Next&gt;&gt;
+            </a>
+        </div>
+    </header>
+
+    <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white/80 backdrop-blur-sm p-8 rounded-lg shadow-lg text-center">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Thanks for the Vibes! 🎵</h2>
+                <p class="text-lg text-gray-600 mb-6">
+                    The event has ended. We hope you had a great time! 
+                </p>
+                <p class="text-violet-600 italic">
+                    See you at the next event! ✨
+                </p>
+                <a href="{{ url_for('home') }}" 
+                   class="mt-8 inline-block px-6 py-3 rounded-full bg-gradient-to-r from-violet-600 to-blue-600 text-white font-medium hover:from-violet-700 hover:to-blue-700 transition-all duration-200">
+                    Back to Home
+                </a>
+            </div>
         </div>
     </div>
-
-</body>
+  </body>
 </html>

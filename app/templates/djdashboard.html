@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DJ Stats</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-violet-50 via-blue-50 to-indigo-50 min-h-screen">
+
+    <header class="bg-white shadow">
+        <div class="container mx-auto px-6 py-4 flex flex-row items-center justify-between">
+          <div class="flex items-center">
+            <a href="{{ url_for('home') }}" class="text-4xl font-bold text-blue-600">
+              Next&gt;&gt;
+            </a>
+          </div>
+          <div class="flex items-center">
+            <a href="#" id="eventButton" class="px-6 py-2 rounded-full bg-blue-100 hover:text-blue-600 hover:bg-blue-200 hover:shadow-lg transition-all duration-300">Jump into an Event!</a>
+            <a href="" id="logoutButton" class="px-6 py-2 rounded-full bg-blue-100 hover:text-blue-600 hover:bg-blue-200 hover:shadow-lg transition-all duration-300">Logout</a>
+            </div>
+        </div>
+      </header>
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-12">
+                <h1 class="text-4xl font-bold text-gray-900 mb-2">DJ Dashboard</h1>
+                <p class="text-gray-600" id="djName">Loading DJ info...</p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Tips Card -->
+                <div class="bg-white/80 backdrop-blur-sm p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Tips</h2>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">This Month</span>
+                            <span class="text-2xl font-bold text-green-600" id="monthlyTips">$0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">All Time</span>
+                            <span class="text-2xl font-bold text-green-600" id="totalTips">$0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Played Songs -->
+                <div class="bg-white/80 backdrop-blur-sm p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Top Played Songs</h2>
+                    <div class="space-y-3" id="topPlayed">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Top Cancelled Songs -->
+                <div class="bg-white/80 backdrop-blur-sm p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Most Cancelled Songs</h2>
+                    <div class="space-y-3" id="topCancelled">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const event_id = localStorage.getItem('eventId_dj');
+        const eventButton = document.getElementById('eventButton');
+        const logoutButton = document.getElementById('logoutButton');    
+
+          if (event_id) {
+            eventButton.href = `/dj?id=${event_id}`;
+            eventButton.textContent = 'Back to Event';
+          } else {
+            eventButton.href = "{{ url_for('djentry') }}";
+          }
+
+          logoutButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Clear all data from localStorage
+            localStorage.removeItem('eventId_dj');
+            localStorage.removeItem('djId_dj');
+            
+            // Redirect to login page
+            window.location.href = "{{ url_for('login_page') }}";
+          });
+        
+        async function loadDJStats() {
+            const djId = localStorage.getItem('djId_dj');
+            try {
+                console.log(djId);
+                const response = await fetch(`/api/dj/stats/${djId}`);
+                const data = await response.json();
+                console.log(data);
+                
+                const djName = data.dj_details.name;
+                document.getElementById('djName').textContent = `Welcome, ${djName}!`;
+                // Update Tips
+                document.getElementById('monthlyTips').textContent = `$${data.tips.current_month.toFixed(2)}`;
+                document.getElementById('totalTips').textContent = `$${data.tips.all_time.toFixed(2)}`;
+                
+                // Update Top Played
+                const topPlayedHtml = data.top_played.map(song => `
+                    <div class="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <div>
+                            <div class="font-medium text-gray-900">${song.title}</div>
+                            <div class="text-sm text-gray-500">${song.artist}</div>
+                        </div>
+                        <div class="text-green-600 font-medium">${song.count} plays</div>
+                    </div>
+                `).join('');
+                document.getElementById('topPlayed').innerHTML = topPlayedHtml;
+                
+                // Update Top Cancelled
+                const topCancelledHtml = data.top_cancelled.map(song => `
+                    <div class="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <div>
+                            <div class="font-medium text-gray-900">${song.title}</div>
+                            <div class="text-sm text-gray-500">${song.artist}</div>
+                        </div>
+                        <div class="text-red-600 font-medium">${song.count} cancels</div>
+                    </div>
+                `).join('');
+                document.getElementById('topCancelled').innerHTML = topCancelledHtml;
+                
+            } catch (error) {
+                console.error('Error loading DJ stats:', error);
+            }
+        }
+
+        // Load stats when page loads
+        loadDJStats();
+    </script>
+</body>
+</html>

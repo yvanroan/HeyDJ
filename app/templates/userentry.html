@@ -5,28 +5,64 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXT >></title>
+    <title>NEXT&gt;&gt; User Processing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
   </head>
 
   <body>
-    <div class="header">
-        <h1>NEXT >></h1>
-    </div>
+    <header class="bg-white shadow">
+        <div class="container mx-auto px-6 py-4">
+          <a href="{{ url_for('home') }}" class="text-4xl font-bold text-blue-600">
+            Next&gt;&gt;
+          </a>
+        </div>
+    </header>
     
-    <div class="container">
-        <!-- Session controls -->
-        <div class="card flex">
-            <p>Add event_id and reload to get the experience :) </p>
-            <!-- url?event_id={an event_id} -->
+    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-blue-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-lg shadow-lg">
+            <div class="text-center">
+                <h2 class="text-3xl font-extrabold text-gray-900">Join Event</h2>
+                <p class="mt-2 text-sm text-gray-600">Enter the event code provided by your DJ</p>
+            </div>
+    
+            <form id="eventForm" class="mt-8 space-y-6">
+                <div>
+                    <label for="eventCode" class="block text-sm font-medium text-gray-700">Event Code</label>
+                    <div class="mt-1">
+                        <input type="text" 
+                               id="eventCode" 
+                               name="eventCode" 
+                               required 
+                               placeholder="Enter event code"
+                               class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm">
+                    </div>
+                </div>
+    
+                <div>
+                    <button type="submit" 
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-all duration-200">
+                            NEXT&gt;&gt;
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
     <script>
+
+        document.getElementById('eventForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const eventCode = document.getElementById('eventCode').value.trim();
+            if (eventCode) {
+                window.location.href = `${window.location.pathname}?event_id=${eventCode}`;
+            }
+        }); 
       
-      document.addEventListener('DOMContentLoaded', () => {
+      window.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
             const eventId = parseInt(params.get('event_id'));
+            console.log(eventId);
             let userId = '';
             let djId = '';
             
@@ -34,7 +70,6 @@
                 // Save the eventId to localStorage
                 localStorage.setItem('eventId_user', eventId);
                 fetchUserAndDj(eventId).then(([a, b]) => {
-                    console.log([a,b]);
                     djId = a['id'];
                     userId = b['id']; 
                     localStorage.setItem('userId', userId);

@@ -1,6 +1,5 @@
 import os
 from dotenv import load_dotenv
-# import psycopg2
 
 load_dotenv()
 
@@ -14,6 +13,5 @@ class Config(object):
     
     if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
-            
-    # print(DATABASE_URL)
+
     SQLALCHEMY_DATABASE_URI = DATABASE_URL

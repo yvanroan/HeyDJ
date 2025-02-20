@@ -3,49 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXT >> Login</title>
+    <title>NEXT&gt;&gt; Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
 </head>
 <body>
-    <div class="header">
-        <h1>NEXT >></h1>
-    </div>
-    <div class="card flex">
-        <form id="loginForm">
-            <h2>Login</h2>
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            <button type="submit">Login</button>
-            
-        </form>
+    <header class="bg-white shadow">
+        <div class="container mx-auto px-6 py-4">
+          <a href="{{ url_for('home') }}" class="text-4xl font-bold text-blue-600">
+            Next&gt;&gt;
+          </a>
+        </div>
+    </header>
 
-        <a href="{{ url_for('register') }}" class="form-group">
-            <button>Register here!</button>
-        </a>
+    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-blue-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-lg shadow-lg">
+            <form id="loginForm" class="space-y-6">
+                <div class="text-center">
+                    <h2 class="text-3xl font-extrabold text-gray-900">Login</h2>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" 
+                               id="email" 
+                               name="email" 
+                               required 
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
 
-        <a href="{{ url_for('userentry') }}" class="form-group">
-            <button>User here!</button>
-        </a>
-        
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                        <input type="password" 
+                               id="password" 
+                               name="password" 
+                               required 
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+
+                <div>
+                    <button type="submit" 
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                        Login
+                    </button>
+                </div>
+            </form>
+
+            <div class="flex flex-col space-y-4 mt-6">
+                <a href="{{ url_for('register') }}" 
+                   class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-colors duration-200">
+                    Register here!
+                </a>
+
+                <a href="{{ url_for('userentry') }}" 
+                   class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                    Users can continue as guest here!
+                </a>
+            </div>
+        </div>
     </div>
 
     <script>
 
         document.getElementById('loginForm').addEventListener('submit', function(event) {
             event.preventDefault(); 
-        
+            console.log('loginForm submitted');
             const formData = new FormData(this); 
             const email = formData.get('email'); 
             const pass = formData.get('password');
 
             const data = {'mail':email, 'pass':pass};
-            console.log(data);
             fetch("{{ url_for('confirm_dj') }}", {
             method: 'POST',
             headers: {
@@ -55,7 +84,6 @@
             })
             .then(response => response.json())
             .then(dat => {
-                console.log(dat);
                 if(!dat['exist']){
                     alert('Your email is not in the database');
                 }
@@ -63,9 +91,8 @@
                     alert('Your password is not correct. Please verify and try again.')
                 }else{
                     localStorage.setItem('djId_dj', dat['id']);
-                    console.log('yeah');
 
-                    window.location.href = "{{ url_for('djentry') }}";
+                    window.location.href = "{{ url_for('dj_dashboard') }}";
                 }
 
             })
